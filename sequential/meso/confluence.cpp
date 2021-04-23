@@ -352,7 +352,7 @@ int main(int argc, char const *argv[])
 	// neighboring boxes for each box (4 neighbors / box)
 	int nntmp;
 	int scx = sb[0];
-	vector<vector<int>> nn;
+	vector<vector<int> > nn;
 	nn.resize(NBX);
 
 	// loop over cells, save forward neighbors for each box
