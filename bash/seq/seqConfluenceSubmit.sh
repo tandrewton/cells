@@ -6,7 +6,7 @@ srcdir=$cellsdir/src
 maindir=$cellsdir/sequential
 
 # directory for all output for cell simulations
-outputdir=/gpfs/loomis/project/fas/ohern/jdt45/cells
+outputdir=/gpfs/loomis/project/fas/ohern/at965/cells
 
 # directory for simulations specific to jamming
 simtypedir=$outputdir/confluence
@@ -38,7 +38,7 @@ let numSeeds=$numSeedsPerRun*$numRuns
 let endSeed=$startSeed+$numSeeds-1
 
 # name strings
-basestr=conf_N"$NCELLS"_NV"$NV"_calA"$calA0"_kl"$kl"_kb"$kb"_kbb"$kbb"
+basestr=conf_N"$NCELLS"_NV"$NV"_calA"$calA0"_kl"$kl"_kb"$kb"_att"$att"
 runstr="$basestr"_startseed"$startSeed"_endseed"$endSeed"
 
 # make directory specific for this simulation
@@ -52,8 +52,8 @@ echo Running $numSeeds confluence sims of $NCELLS cells with $NV verts, bidisper
 
 # run compiler
 rm -f $binf
-g++ --std=c++11 -O3 $mainf -o $binf 
-echo compiling with : g++ --std=c++11 -O3 $mainf -o $binf 
+g++ --std=c++11 -O3 $mainf -o $binf
+echo compiling with : g++ --std=c++11 -O3 $mainf -o $binf
 
 # check compilation
 if [[ ! -f $binf ]]
@@ -69,7 +69,7 @@ rm -f $taskf
 # loop over files
 let fcount=0
 
-# LOOP OVER FILES. 
+# LOOP OVER FILES.
 for seed in `seq $startSeed $numSeedsPerRun $endSeed`; do
     # count files
     let fcount=$fcount+1
@@ -156,7 +156,3 @@ sbatch -t $time $slurmf
 # 10. time
 # 11. number of runs (number of array entries, i.e. arraynum)
 # 12. start seed (end seed determined by number of runs)
-
-
-
-
