@@ -1,8 +1,8 @@
-bash bash/seq/seqConfluenceSubmit.sh 24 24 1.0 0.4 1.0 1.0 0 0 day 0-12:00:00 1 1
-bash bash/seq/seqConfluenceSubmit.sh 24 24 1.05 0.4 1.0 1.0 0 0 day 0-12:00:00 1 1
-bash bash/seq/seqConfluenceSubmit.sh 24 24 1.10 0.4 1.0 1.0 0 0 day 0-12:00:00 1 1
-bash bash/seq/seqConfluenceSubmit.sh 24 24 1.15 0.4 1.0 1.0 0 0 day 0-12:00:00 1 1
-bash bash/seq/seqConfluenceSubmit.sh 24 24 1.20 0.4 1.0 1.0 0 0 day 0-12:00:00 1 1
+bash bash/seq/seqConfluenceSubmit.sh 24 24 1.0 0.4 1.0 1.0 0 0 day 0-12:00:00 10 1
+bash bash/seq/seqConfluenceSubmit.sh 24 24 1.05 0.4 1.0 1.0 0 0 day 0-12:00:00 10 1
+bash bash/seq/seqConfluenceSubmit.sh 24 24 1.10 0.4 1.0 1.0 0 0 day 0-12:00:00 10 1
+bash bash/seq/seqConfluenceSubmit.sh 24 24 1.15 0.4 1.0 1.0 0 0 day 0-12:00:00 10 1
+bash bash/seq/seqConfluenceSubmit.sh 24 24 1.20 0.4 1.0 1.0 0 0 day 0-12:00:00 10 1
 bash bash/seq/seqConfluenceSubmit.sh 24 24 1.0 0.4 1.0 1.0 0 0.0001 day 0-12:00:00 1 1
 bash bash/seq/seqConfluenceSubmit.sh 24 24 1.05 0.4 1.0 1.0 0 0.0001 day 0-12:00:00 1 1
 bash bash/seq/seqConfluenceSubmit.sh 24 24 1.10 0.4 1.0 1.0 0 0.0001 day 0-12:00:00 1 1
