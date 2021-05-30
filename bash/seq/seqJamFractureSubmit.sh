@@ -47,8 +47,8 @@ mkdir -p $simdatadir
 
 # compile into binary using packing.h
 binf=bin/"$runstr".o
-mainf=$maindir/meso/confluence.cpp
-echo Running $numSeeds confluence sims of $NCELLS cells with $NV verts, bidisperse , calA0 = $calA0 and attraction parameter att = $att
+mainf=$maindir/fracture/jamFracture.cpp
+echo Running $numSeeds fracture sims of $NCELLS cells with $NV verts, bidisperse , calA0 = $calA0 and attraction parameter att = $att
 
 # run compiler
 rm -f $binf
@@ -95,7 +95,7 @@ for seed in `seq $startSeed $numSeedsPerRun $endSeed`; do
         shapef=$simdatadir/$filestr.shape
 
         # append to runString
-        runString="$runString ; ./$binf $NCELLS $NV $calA0 $phiMin $phiMax $kl $kb $att $runseed $posf $shapef"
+        runString="$runString ; ./$binf $NCELLS $NV $calA0 $phiMin $Ptol $kl $kb $att $runseed $posf $shapef"
     done
 
     # finish off run string
@@ -150,7 +150,7 @@ sbatch -t $time $slurmf
 # 2. NV
 # 3. calA0
 # 4. phiMin
-# 5. phiMax
+# 5. Ptol
 # 6. kl
 # 7. kb
 # 8. att
