@@ -1583,7 +1583,7 @@ int main(int argc, char const *argv[])
                     cout << "	** U = " << U << endl;
                     cout << " WRITING ENTHALPY-MINIMIZED CONFIG TO .jam FILE" << endl;
                     cout << " ENDING COMPRESSION SIMULATION" << endl;
-                    printPos(posout, vpos, a0, l0, L, cij, nv, szList, phi, NCELLS);
+                    printPos(posout, vpos, vrad, a0, calA0, L, cij, nv, szList, phi, NCELLS);
                     break;
                 }
             }
