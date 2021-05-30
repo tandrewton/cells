@@ -668,15 +668,14 @@ int main(int argc, char const *argv[])
     rL = -1;
 
     // compute scale factors
-    drgrow = sqrt((phi0 + dphi) / phi0);
-    drshrink = sqrt((phi0 - 0.5 * dphi) / phi0);
+    drgrow = sqrt((phi + dphiGrow) / phi);
+    drshrink = sqrt((phi - 0.5 * dphiGrow) / phi);
 
     // saved state
     vector<double> vposSave(vertDOF, 0.0);
     vector<double> vradSave(NVTOT, 0.0);
     vector<double> a0Save(NCELLS, 0.0);
     vector<double> l0Save(NCELLS, 0.0);
-    vector<double> dcSave(NCELLS, 0.0);
 
     // save initial state
     vposSave = vpos;
@@ -1488,7 +1487,6 @@ int main(int argc, char const *argv[])
                 vradSave = vrad;
                 a0Save = a0;
                 l0Save = l0;
-                dcSave = dc;
 
                 // compute new scale factor
                 scaleFactor = drshrink;
@@ -1512,7 +1510,6 @@ int main(int argc, char const *argv[])
                     vrad = vradSave;
                     a0 = a0Save;
                     l0 = l0Save;
-                    dc = dcSave;
 
                     // compute new scale factor by root search
                     scaleFactor = 0.5 * (rH + rL) / r0;
@@ -1533,7 +1530,6 @@ int main(int argc, char const *argv[])
                     vradSave = vrad;
                     a0Save = a0;
                     l0Save = l0;
-                    dcSave = dc;
 
                     // keep shrinking at same rate until unjamming
                     scaleFactor = drshrink;
@@ -1555,7 +1551,6 @@ int main(int argc, char const *argv[])
                     vrad = vradSave;
                     a0 = a0Save;
                     l0 = l0Save;
-                    dc = dcSave;
 
                     // compute new scale factor
                     scaleFactor = 0.5 * (rH + rL) / r0;
@@ -1573,7 +1568,6 @@ int main(int argc, char const *argv[])
                     vrad = vradSave;
                     a0 = a0Save;
                     l0 = l0Save;
-                    dc = dcSave;
 
                     // compute new scale factor
                     scaleFactor = 0.5 * (rH + rL) / r0;
@@ -1587,8 +1581,6 @@ int main(int argc, char const *argv[])
                     cout << "	** fcheck = " << fcheck << endl;
                     cout << "	** pcheck = " << pcheck << endl;
                     cout << "	** U = " << U << endl;
-                    cout << "	** Nvv = " << Nvv << endl;
-                    cout << "	** Ncc = " << Ncc << endl;
                     cout << " WRITING ENTHALPY-MINIMIZED CONFIG TO .jam FILE" << endl;
                     cout << " ENDING COMPRESSION SIMULATION" << endl;
                     printPos(posout, vpos, a0, l0, L, cij, nv, szList, phi0, NCELLS);
