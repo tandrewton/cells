@@ -787,7 +787,7 @@ int main(int argc, char const *argv[])
         }
 
         // update tolerance
-        if (phi0 > 0.6)
+        if (phi > 0.6)
             Ftoltmp = Ftol;
 
         // RESET FIRE VARIABLES
@@ -1473,7 +1473,7 @@ int main(int argc, char const *argv[])
             if (undercompressed)
             {
                 r0 = rho0;
-                scaleFactor = sqrt((phi0 + dphi) / phi0);
+                scaleFactor = sqrt((phi + dphiGrow) / phi);
             }
             // if first overcompressed, decompress by dphi/2 until unjamming
             else if (overcompressed)
@@ -1583,7 +1583,7 @@ int main(int argc, char const *argv[])
                     cout << "	** U = " << U << endl;
                     cout << " WRITING ENTHALPY-MINIMIZED CONFIG TO .jam FILE" << endl;
                     cout << " ENDING COMPRESSION SIMULATION" << endl;
-                    printPos(posout, vpos, a0, l0, L, cij, nv, szList, phi0, NCELLS);
+                    printPos(posout, vpos, a0, l0, L, cij, nv, szList, phi, NCELLS);
                     break;
                 }
             }
