@@ -38,7 +38,7 @@ let numSeeds=$numSeedsPerRun*$numRuns
 let endSeed=$startSeed+$numSeeds-1
 
 # name strings
-basestr=conf_N"$NCELLS"_NV"$NV"_calA"$calA0"_kl"$kl"_kb"$kb"_att"$att"
+basestr=fracture_N"$NCELLS"_NV"$NV"_calA"$calA0"_kl"$kl"_kb"$kb"_att"$att"
 runstr="$basestr"_startseed"$startSeed"_endseed"$endSeed"
 
 # make directory specific for this simulation

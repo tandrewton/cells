@@ -81,13 +81,14 @@ int main(int argc, char const *argv[])
 
     // read in parameters from command line input
     // test: g++ -O3 sequential/meso/confluence.cpp -o conf.o
-    // test: ./conf.o 12 20 1.08 0.2 1.0 1.0 0 0 1 pos.test shape.test
+    // test: ./frac.o 12 20 1.08 0.4 1e-7 1.0 0 0 1 pos.test shape.test
     //
     // PARAMETERS:
     // 1. NCELLS 		= # of dpm particles
     // 2. NV 			= # of vertices on smaller cells, larger cells = round(NV*1.4)
     // 3. calA0 		= shape parameter of all cells, initial a0 = 1
     // 4. phiMin 		= min packing fraction (start)
+    // 5. Ptol          = pressure tolerance for jamming loop
     // 6. kl 			= perimeter spring constant
     // 7. kb 			= bending spring constant
     // 8. att 			= short-range attraction parameter
