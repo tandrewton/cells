@@ -820,7 +820,7 @@ int main(int argc, char const *argv[])
         rho0 = sqrt(a0.at(0));
 
         // RELAX FORCES USING FIRE
-        while ((fcheck > Ftol || npPMin < NMIN) && fireit < itmax)
+        while (fcheck > Ftol && fireit < itmax)
         {
             // VV POSITION UPDATE
             for (i = 0; i < vertDOF; i++)
