@@ -1343,7 +1343,8 @@ int main(int argc, char const *argv[])
                 cout << "	** fcheck 	= " << fcheck << endl;
                 cout << "	** pcheck 	= " << pcheck << endl;
                 cout << "	** U 		= " << U << endl;
-
+                cout << "   ** Ftoltmp     = " << Ftoltmp << endl;
+                cout << "   ** Ptol     = " << Ptol << endl;
                 cout << "	** vnorm 	= " << vnorm << endl;
                 cout << "	** dt 		= " << dt << endl;
                 cout << "	** P 		= " << P << endl;
@@ -1432,6 +1433,7 @@ int main(int argc, char const *argv[])
             cout << "		M I N I M I Z A T I O N 	" << endl;
             cout << "	C O N V E R G E D! 				" << endl;
             cout << "	** at k = " << k << " 			" << endl;
+            cout << "   ** line 1436 in code " << endl;
             cout << "===========================================" << endl;
             cout << endl;
             cout << "	** fireit 	= " << fireit << endl;
