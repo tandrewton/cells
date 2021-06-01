@@ -1,10 +1,17 @@
 /* 
 
-	MAIN FILE FOR 2D CONFLUENCE CODE
+	MAIN FILE FOR 2D ATTRACTIVE JAMMING CODE VIA ISOTROPIC COMPRESSION
+            OF NCELLS USING LINKED-LIST SPEED UP
 
-		-- Compresses packing to arbitrary phi = sum(a0)/L^2
+        CELLS ARE BIDISPERSE, WITH BENDING ENERGY (KB) AND VERTEX-VERTEX
+            ATTRACTION OPTIONS
+
+		-- Compresses packing to jamming
 		-- Prints position / shape info every dphiPrint
 		-- Supports bending energy (kb) and vertex-vertex attraction
+
+        Andrew Ton 
+        06/01/2021, majority of algorithm courtesy of Jack Treado
 
 */
 
@@ -138,6 +145,16 @@ int main(int argc, char const *argv[])
     if (!posout.is_open())
     {
         cout << "	** ERROR: position file " << positionFile << " could not be opened, ending." << endl;
+        return 1;
+    }
+
+    // open jam file, which holds jammed configuration
+    ofstream jamout;
+    string jamFile = positionFile + ".jam";
+    jamout.open(jamFile.c_str());
+    if (!jamout.is_open())
+    {
+        cout << "   ** ERROR: jam file " << jamFile << "could not be opened, ending." << endl;
         return 1;
     }
 
@@ -1609,7 +1626,7 @@ int main(int argc, char const *argv[])
                     cout << "	** U = " << U << endl;
                     cout << " WRITING ENTHALPY-MINIMIZED CONFIG TO .jam FILE" << endl;
                     cout << " ENDING COMPRESSION SIMULATION" << endl;
-                    printPos(posout, vpos, vrad, a0, calA0, L, cij, nv, szList, phi, NCELLS);
+                    printPos(jamout, vpos, vrad, a0, calA0, L, cij, nv, szList, phi, NCELLS);
                     break;
                 }
                 else
@@ -1705,31 +1722,6 @@ int main(int argc, char const *argv[])
         }
         phi /= L[0] * L[1];
         scaleFactor = sqrt((phi + dphiGrow) / phi);
-        /*// output to console
-        cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" << endl;
-        cout << "===============================================" << endl
-             << endl;
-        cout << " 	Q U A S I S T A T I C  				" << endl;
-        cout << " 	  	I S O T R O P I C 				" << endl;
-        cout << "			C O M P R E S S I O N 	(DEBUG MENU, END OF LOOP CLAUSE)	" << endl
-             << endl;
-        cout << "===============================================" << endl;
-        cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" << endl;
-        cout << endl;
-        cout << "	* k 			= " << k << endl;
-        cout << "	* scaleFactor 	= " << scaleFactor << endl;
-        cout << "	* phi 			= " << phi << endl;
-        cout << "	* r0 			= " << r0 << endl;
-        cout << "	* rH 			= " << rH << endl;
-        cout << "	* rL 			= " << rL << endl;
-        cout << "	* fcheck 		= " << fcheck << endl;
-        cout << "	* pcheck 		= " << pcheck << endl;
-        cout << "	* U 		 	= " << U << endl;
-        cout << "	* undercompressed = " << undercompressed << endl;
-        cout << "	* overcompressed = " << overcompressed << endl;
-        cout << "	* jammed = " << jammed << endl
-             << endl;
-        cout << endl;*/
     }
     if (k == kmax)
     {
