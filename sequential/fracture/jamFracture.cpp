@@ -33,6 +33,7 @@ const int pnum = 14;
 // simulation constants
 const int nvmin = 12;
 const double timeStepMag = 0.005;
+const double phiJMin = 0.6;
 const double dphiGrow = 0.001;
 const double dphiPrint = 0.01;
 const double sizeRatio = 1.4;
@@ -80,8 +81,8 @@ int main(int argc, char const *argv[])
     double calA0Input, phi, Ptol, phiMin, kl, kb, att;
 
     // read in parameters from command line input
-    // test: g++ -O3 sequential/meso/confluence.cpp -o conf.o
-    // test: ./frac.o 12 20 1.08 0.4 1e-7 1.0 0 0 1 pos.test shape.test
+    // test: g++ -O3 -std=c++11 sequential/fracture/jamFracture.cpp -o frac.o
+    // test: ./frac.o 12 20 1.08 0.2 1e-7 1.0 0 0 1 pos.test shape.test
     //
     // PARAMETERS:
     // 1. NCELLS 		= # of dpm particles
@@ -797,8 +798,8 @@ int main(int argc, char const *argv[])
         vnorm = 0;
         alpha = alpha0;
 
-        dtmax = 5.0 * dt0;
-        dtmin = 1e-8 * dt0;
+        dtmax = 10.0 * dt0;
+        dtmin = 1e-2 * dt0;
         dt = dt0;
 
         npPos = 0;
@@ -806,7 +807,7 @@ int main(int argc, char const *argv[])
         npPMin = 0;
 
         fireit = 0;
-        fcheck = 10 * Ftol;
+        fcheck = 10 * Ftoltmp;
 
         // reset forces
         for (i = 0; i < vertDOF; i++)
@@ -1450,6 +1451,11 @@ int main(int argc, char const *argv[])
                  << endl;
         }
 
+        // boolean check for jamming
+        undercompressed = ((pcheck < 2.0 * Ptol && rH < 0) || (pcheck < Ptol && rH > 0));
+        overcompressed = (pcheck > 2.0 * Ptol && phi > phiJMin);
+        jammed = (pcheck < 2.0 * Ptol && pcheck > Ptol && rH > 0 && rL > 0);
+
         // output to console
         cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" << endl;
         cout << "===============================================" << endl
@@ -1462,11 +1468,18 @@ int main(int argc, char const *argv[])
         cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" << endl;
         cout << endl;
         cout << "	* k 			= " << k << endl;
-        cout << "	* dr 			= " << scaleFactor << endl;
+        cout << "	* scaleFactor 	= " << scaleFactor << endl;
         cout << "	* phi 			= " << phi << endl;
+        cout << "	* r0 			= " << r0 << endl;
+        cout << "	* rH 			= " << rH << endl;
+        cout << "	* rL 			= " << rL << endl;
         cout << "	* fcheck 		= " << fcheck << endl;
         cout << "	* pcheck 		= " << pcheck << endl;
         cout << "	* U 		 	= " << U << endl;
+        cout << "	* undercompressed = " << undercompressed << endl;
+        cout << "	* overcompressed = " << overcompressed << endl;
+        cout << "	* jammed = " << jammed << endl
+             << endl;
         cout << endl;
 
         // update particle sizes based on target check
@@ -1496,6 +1509,11 @@ int main(int argc, char const *argv[])
 
                 // print to console
                 cout << "	-- -- overcompressed for the first time, scaleFactor = " << scaleFactor << endl;
+            }
+            else
+            {
+                std::cout << "error: undercompressed and overcompressed flags are not set.\n";
+                return 1;
             }
         }
         else
@@ -1539,6 +1557,11 @@ int main(int argc, char const *argv[])
 
                     // print to console
                     cout << "	-- -- overcompressed, still no unjamming, scaleFactor = " << scaleFactor << endl;
+                }
+                else
+                {
+                    std::cout << "error: undercompressed and overcompressed flags are not set.\n";
+                    return 1;
                 }
             }
             else
@@ -1588,6 +1611,11 @@ int main(int argc, char const *argv[])
                     cout << " ENDING COMPRESSION SIMULATION" << endl;
                     printPos(posout, vpos, vrad, a0, calA0, L, cij, nv, szList, phi, NCELLS);
                     break;
+                }
+                else
+                {
+                    std::cout << "error: neither under nor overcompressed nor jammed\n";
+                    return 1;
                 }
             }
         }
@@ -1677,6 +1705,31 @@ int main(int argc, char const *argv[])
         }
         phi /= L[0] * L[1];
         scaleFactor = sqrt((phi + dphiGrow) / phi);
+        /*// output to console
+        cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" << endl;
+        cout << "===============================================" << endl
+             << endl;
+        cout << " 	Q U A S I S T A T I C  				" << endl;
+        cout << " 	  	I S O T R O P I C 				" << endl;
+        cout << "			C O M P R E S S I O N 	(DEBUG MENU, END OF LOOP CLAUSE)	" << endl
+             << endl;
+        cout << "===============================================" << endl;
+        cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" << endl;
+        cout << endl;
+        cout << "	* k 			= " << k << endl;
+        cout << "	* scaleFactor 	= " << scaleFactor << endl;
+        cout << "	* phi 			= " << phi << endl;
+        cout << "	* r0 			= " << r0 << endl;
+        cout << "	* rH 			= " << rH << endl;
+        cout << "	* rL 			= " << rL << endl;
+        cout << "	* fcheck 		= " << fcheck << endl;
+        cout << "	* pcheck 		= " << pcheck << endl;
+        cout << "	* U 		 	= " << U << endl;
+        cout << "	* undercompressed = " << undercompressed << endl;
+        cout << "	* overcompressed = " << overcompressed << endl;
+        cout << "	* jammed = " << jammed << endl
+             << endl;
+        cout << endl;*/
     }
     if (k == kmax)
     {
