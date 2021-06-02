@@ -49,7 +49,7 @@ mkdir -p $simdatadir
 # compile into binary using packing.h
 binf=bin/"$runstr".o
 mainf=$maindir/fracture/jamFracture.cpp
-echo Running $numSeeds fracture sims of $NCELLS cells with $NV verts, bidisperse , calA0 = $calA0 and attraction parameter att = $att
+echo Running $numSeeds fracture sims of $NCELLS cells with $NV verts, bidisperse , calA0 = $calA0 and attraction parameter att = $att, with $NT timesteps
 
 # run compiler
 rm -f $binf
@@ -97,7 +97,7 @@ for seed in `seq $startSeed $numSeedsPerRun $endSeed`; do
         energyf=$simdatadir/$filestr.energy
 
         # append to runString
-        runString="$runString ; ./$binf $NCELLS $NV $calA0 $phiMin $Ptol $kl $kb $att $runseed $posf $shapef $energyf"
+        runString="$runString ; ./$binf $NCELLS $NV $calA0 $phiMin $Ptol $kl $kb $att $runseed $NT $posf $shapef $energyf"
     done
 
     # finish off run string
