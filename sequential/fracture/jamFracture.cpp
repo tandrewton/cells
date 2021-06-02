@@ -77,6 +77,11 @@ double perimeter(vector<double> &vpos, int ci, vector<double> &L, vector<int> &n
 // print to file
 void printPos(ofstream &posout, vector<double> &vpos, vector<double> &vrad, vector<double> &a0, vector<double> &calA0, vector<double> &L, vector<int> &cij, vector<int> &nv, vector<int> &szList, double phi, int NCELLS);
 
+// retire the last cell's degree of freedom information from all vectors
+void deleteLastCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &cellDOF, int &vertDOF, vector<int> &szList,
+                    vector<int> &nv, vector<int> &list, vector<double> &vvel, vector<double> &vpos, vector<double> &vF, vector<int> &im1,
+                    vector<int> &ip1, int &vim1, int &vip1, int largeNV, int smallNV);
+
 // MAIN
 int main(int argc, char const *argv[])
 {
@@ -89,7 +94,7 @@ int main(int argc, char const *argv[])
 
     // read in parameters from command line input
     // test: g++ -O3 -std=c++11 sequential/fracture/jamFracture.cpp -o frac.o
-    // test: ./frac.o 12 20 1.08 0.2 1e-7 1.0 0 0.01 1 2e5 pos.test shape.test energy.test
+    // test: ./frac.o 12 20 1.20 0.8 1e-7 1.0 0 0.01 1 3e5 pos.test shape.test energy.test
     //
     // PARAMETERS:
     // 1. NCELLS 		= # of dpm particles
@@ -142,6 +147,10 @@ int main(int argc, char const *argv[])
     seedss >> seed;
     NTss >> NT_dbl;
 
+    //attraction value for jamming
+    double att_nve = att;
+    att = 0.0;
+
     // cast input NT_dbl to integer
     NT = (int)NT_dbl;
 
@@ -193,6 +202,8 @@ int main(int argc, char const *argv[])
     NVTOT = smallNV * smallN + largeNV * largeN;
 
     // szList and nv (keep track of global vertex indices)
+    // nv is the number of vertices of cell # ci
+    // szList is the cumulative number of vertices from cell # 0 to cell # ci
     cout << "makin vectors" << endl;
     vector<int> szList(NCELLS, 0);
     vector<int> nv(NCELLS, 0);
@@ -1642,9 +1653,9 @@ int main(int argc, char const *argv[])
                     cout << "	** fcheck = " << fcheck << endl;
                     cout << "	** pcheck = " << pcheck << endl;
                     cout << "	** U = " << U << endl;
-                    cout << " WRITING ENTHALPY-MINIMIZED CONFIG TO .jam FILE" << endl;
+                    cout << " NOT WRITING ENTHALPY-MINIMIZED CONFIG TO .jam FILE" << endl;
                     cout << " ENDING COMPRESSION SIMULATION" << endl;
-                    printPos(jamout, vpos, vrad, a0, calA0, L, cij, nv, szList, phi, NCELLS);
+                    //printPos(jamout, vpos, vrad, a0, calA0, L, cij, nv, szList, phi, NCELLS);
                     break;
                 }
                 else
@@ -1773,21 +1784,83 @@ int main(int argc, char const *argv[])
 
 	 * * * * * * * * * * * * * * * * * */
 
+    // DEBUG MENU
+    cout << endl
+         << endl;
+    cout << "===========================================" << endl;
+    cout << "			N V E " << endl;
+    cout << "===========================================" << endl;
+    cout << endl;
+    cout << "	** tt = n/a" << endl;
+    cout << "	** smallN = " << smallN << endl;
+    cout << "	** largeN = " << largeN << endl;
+    cout << "	** NCELLS = " << NCELLS << endl;
+    cout << "	** NVTOT = " << NVTOT << endl;
+    cout << "	** cellDOF = " << cellDOF << endl;
+    cout << "	** vertDOF = " << vertDOF << endl;
+    cout << "	** dim szList = " << szList.size() << endl;
+    cout << "	** dim nv = " << nv.size() << endl;
+    cout << "	** dim list = " << list.size() << endl;
+    cout << "	** dim vvel = " << vvel.size() << endl;
+    cout << "	** dim vpos = " << vpos.size() << endl;
+    cout << "	** dim vF = " << vF.size() << endl;
+
     // NVE VARIABLES
     int tt;
     double K;
+    att = att_nve;
 
     // reset for NVE
     dt = dt0;
 
+    //initialize velocities according to temperature T0 and zero total linear momentum.
+    double T0 = 0.0001;
+    double v_cm_x = 0.0;
+    double v_cm_y = 0.0;
     for (i = 0; i < vertDOF; i++)
     {
-        //initialized at zero temperature
-        vvel[i] = 0.0;
+        // box muller transform
+        double r1 = drand48();
+        double r2 = drand48();
+        double grv = sqrt(-2.0 * log(r1)) * cos(2.0 * PI * r2);
+
+        // draw random velocity
+        vvel[i] = sqrt(T0) * grv;
+        if (i % NDIM == 0)
+        {
+            v_cm_x += vvel[i];
+        }
+        else if (i % NDIM == 1)
+        {
+            v_cm_y += vvel[i];
+        }
+        else
+        {
+            cout << "Error with number of dimensions in velocity initialization, exiting...\n";
+            return 1;
+        }
+    }
+    for (i = 0; i < vertDOF; i++)
+    {
+        if (i % NDIM == 0)
+        {
+            vvel[i] -= v_cm_x / NVTOT;
+        }
+        else
+        {
+            vvel[i] -= v_cm_y / NVTOT;
+        }
     }
     cout << "\t** Looping over time for NT = " << NT << " time steps with dt = " << dt << endl;
     for (tt = 0; tt < NT; tt++)
     {
+        //after equilibrating, delete the last cell
+        if (tt == 1e5 && NT >= 2e5)
+        {
+            cout << "Deleting particle!\n";
+            deleteLastCell(smallN, largeN, NCELLS, NVTOT, cellDOF, vertDOF, szList,
+                           nv, list, vvel, vpos, vF, im1, ip1, vim1, vip1, largeNV, smallNV);
+        }
         // VV POSITION UPDATE
         for (i = 0; i < vertDOF; i++)
         {
@@ -2293,6 +2366,18 @@ int main(int argc, char const *argv[])
             cout << "	** K = " << K << endl;
             cout << "	** E = " << U + K << endl;
             cout << "	** p = " << pcheck << endl;
+            cout << "	** smallN = " << smallN << endl;
+            cout << "	** largeN = " << largeN << endl;
+            cout << "	** NCELLS = " << NCELLS << endl;
+            cout << "	** NVTOT = " << NVTOT << endl;
+            cout << "	** cellDOF = " << cellDOF << endl;
+            cout << "	** vertDOF = " << vertDOF << endl;
+            cout << "	** dim szList = " << szList.size() << endl;
+            cout << "	** dim nv = " << nv.size() << endl;
+            cout << "	** dim list = " << list.size() << endl;
+            cout << "	** dim vvel = " << vvel.size() << endl;
+            cout << "	** dim vpos = " << vpos.size() << endl;
+            cout << "	** dim vF = " << vF.size() << endl;
 
             // print vertex positions to check placement
             cout << "\t** PRINTING POSITIONS TO FILE... " << endl;
@@ -2326,6 +2411,8 @@ int main(int argc, char const *argv[])
 	perimeter 		: returns perimeter of cell ci
 
 	printPos 		: output vertex positions to .pos file for processing and visualization
+
+    deleteLastCell  : delete last cell, reindex all relevant vectors to account for loss of a cell, its vertices, and the corresponding degrees of freedom.
 
 	&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& 
 
@@ -2555,4 +2642,57 @@ void printPos(ofstream &posout, vector<double> &vpos, vector<double> &vrad, vect
     // print end frame
     posout << setw(w) << left << "ENDFR"
            << " " << endl;
+}
+
+void deleteLastCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &cellDOF, int &vertDOF, vector<int> &szList,
+                    vector<int> &nv, vector<int> &list, vector<double> &vvel, vector<double> &vpos, vector<double> &vF, vector<int> &im1,
+                    vector<int> &ip1, int &vim1, int &vip1, int largeNV, int smallNV)
+{
+
+    //delete a particle, re-index all N-dependent vectors to account for this.
+
+    //numbers of cells
+    smallN = smallN;
+    largeN -= 1;
+    NCELLS -= 1;
+
+    // total number of vertices
+    NVTOT = smallNV * smallN + largeNV * largeN;
+
+    // degree of freedom counts
+    cellDOF = NDIM * NCELLS;
+    vertDOF = NDIM * NVTOT;
+
+    //adjust szList and nv, which keep track of global vertex indices
+    szList.pop_back();
+    nv.pop_back();
+    //remove one largeNV's worth of indices from vectors
+    for (int i = 0; i < largeNV; i++)
+    {
+        list.pop_back();
+        for (int j = 0; j < NDIM; j++)
+        {
+            vvel.pop_back();
+            vpos.pop_back();
+            vF.pop_back();
+        }
+    }
+
+    // save list of adjacent vertices
+    im1 = vector<int>(NVTOT, 0);
+    ip1 = vector<int>(NVTOT, 0);
+    for (int ci = 0; ci < NCELLS; ci++)
+    {
+        for (int vi = 0; vi < nv.at(ci); vi++)
+        {
+            // wrap local indices
+            vim1 = (vi - 1 + nv.at(ci)) % nv.at(ci);
+            vip1 = (vi + 1) % nv.at(ci);
+
+            // get global wrapped indices
+            int gi = gindex(ci, vi, szList);
+            im1.at(gi) = gindex(ci, vim1, szList);
+            ip1.at(gi) = gindex(ci, vip1, szList);
+        }
+    }
 }
