@@ -1,6 +1,7 @@
-function cellTrajectoryData = readMesophyllData(fstr)
-%% FUNCTION to read in cell trajectory data from mesophyll sims given file string
+function [cellTrajectoryData, cell_count] = readFractureSim(fstr)
+%% FUNCTION to read in cell trajectory data from fracture sims given file string
 % -- NOTE: ONLY DIFFERENCE IS THAT THIS INCLUDES VERTEX RADIUS EXPLICITLY
+% -- NOTE: Also this has a larger NFRAMES tolerance
 
 % print info to console
 finfo = dir(fstr);
@@ -16,9 +17,14 @@ phi0        = textscan(fid,'PACKF %f',1);                   phi0 = phi0{1};
 fline       = fgetl(fid);
 Ltmp        = textscan(fid,'BOXSZ %f %f',1);
 fline       = fgetl(fid);
+S = fileread(fstr);
+t = regexp(S, 'NUMCL(\s+)(\d+)', 'tokens');
+%cell_count(i) counts the number of cells in frame i
+cell_count = str2num(char(cellfun(@(x) x(1,2), t)));
+
 
 % cells to save 
-NFRAMES = 5e4;
+NFRAMES = 1e6;
 nv      = zeros(NFRAMES,NCELLS);
 vrad    = cell(NFRAMES,NCELLS);
 xpos    = cell(NFRAMES,NCELLS);
@@ -38,7 +44,7 @@ while ~feof(fid)
     % get box length
     L(nf,1) = Ltmp{1};
     L(nf,2) = Ltmp{2};
-    
+    NCELLS = cell_count(nf);
     % get info about deformable particle
     for nn = 1:NCELLS
         % get cell pos and asphericity
