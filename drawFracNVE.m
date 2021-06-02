@@ -1,4 +1,4 @@
-%% Draw sims for confluence.cpp
+%% Draw sims for jamFracture.cpp
 %pwd should give ~/Documents/YalePhd/projects
 clear;
 close all;
@@ -13,11 +13,12 @@ kl = "1.0";
 kb = "0";
 min_seed = 1;
 max_seed = 1;
-att="0.0";
+att="0.01";
 % make plots (boolean)
 makePlots = 0;
 % make a movie (boolean)
 makeAMovie = 1;
+dt = 0.005;
 
 %PC directory
 pc_dir = "/Users/AndrewTon/Documents/YalePhD/projects/Jamming/CellSim/";
@@ -34,22 +35,44 @@ for calA = ["1.08"]
     figure(10), clf, hold on, box on;
     figure(11), clf, hold on, box on;
     figure(12), clf, hold on, box on;
+    figure(13), clf, hold on, box on;
     for seed = min_seed:max_seed
+                
 
+        
         run_name ="frac_N"+N+"_NV"+NV+"_calA"+calA+"_kl"+kl+"_kb"+kb+"_att"+att;
         fileheader=run_name + "_seed" + seed;
 
         pipeline_dir =  subdir_pipeline + run_name + "/";
 
         output_dir = subdir_output + run_name + "/";
+        mkdir(output_dir)
 
         %fstr = pipeline_dir+fileheader+'.pos';
         %shapefstr = pipeline_dir+fileheader+'.shape';
         %fstr = 'pos.test';
         %shapefstr = 'shape.test';
         nvestr = 'pos.test.jam';
+        energystr = 'energy.test';
+        energy_file = load(energystr);
+        energy_file(:,1);
+        t = energy_file(:,1);
+        K = energy_file(:,2);
+        U = energy_file(:,3);
+        E = energy_file(:,4);
+        figure(13);
+        plot(t*dt, K,'r-','linewidth',2, 'DisplayName', 'K');
+        plot(t*dt,U,'b-','linewidth',2, 'DisplayName', 'U');
+        plot(t*dt,E,'k','linewidth',2, 'DisplayName', 'K+U');
+        xlabel('$\tau$','Interpreter','latex');
+        ylabel('Energy','Interpreter','latex');
+        ax = gca;
+        ax.FontSize = 24;
+        if seed == max_seed 
+            annotation('textbox',[.2 .5 .5 .3],'String', txt, 'Edgecolor','none')
+            saveas(gcf, output_dir + 'Energy'+min_seed+'_'+max_seed, 'epsc')
+        end
 
-        mkdir(output_dir)
 
         % read in position data
         [trajectoryData, cell_count] = readFractureSim(nvestr);
