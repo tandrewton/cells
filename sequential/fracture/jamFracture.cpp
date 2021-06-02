@@ -80,7 +80,7 @@ void printPos(ofstream &posout, vector<double> &vpos, vector<double> &vrad, vect
 // retire the last cell's degree of freedom information from all vectors
 void deleteLastCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &cellDOF, int &vertDOF, vector<int> &szList,
                     vector<int> &nv, vector<int> &list, vector<double> &vvel, vector<double> &vpos, vector<double> &vF, vector<int> &im1,
-                    vector<int> &ip1, int &vim1, int &vip1, double phi, int largeNV, int smallNV);
+                    vector<int> &ip1, int &vim1, int &vip1, double phi, vector<double> a0, vector<double> l0, vector<double> L, int largeNV, int smallNV);
 
 // MAIN
 int main(int argc, char const *argv[])
@@ -1862,7 +1862,7 @@ int main(int argc, char const *argv[])
         {
             cout << "Deleting particle!\n";
             deleteLastCell(smallN, largeN, NCELLS, NVTOT, cellDOF, vertDOF, szList,
-                           nv, list, vvel, vpos, vF, im1, ip1, vim1, vip1, phi, largeNV, smallNV);
+                           nv, list, vvel, vpos, vF, im1, ip1, vim1, vip1, phi, a0, l0, L, largeNV, smallNV);
         }
         // VV POSITION UPDATE
         for (i = 0; i < vertDOF; i++)
@@ -2656,7 +2656,7 @@ void printPos(ofstream &posout, vector<double> &vpos, vector<double> &vrad, vect
 
 void deleteLastCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &cellDOF, int &vertDOF, vector<int> &szList,
                     vector<int> &nv, vector<int> &list, vector<double> &vvel, vector<double> &vpos, vector<double> &vF, vector<int> &im1,
-                    vector<int> &ip1, int &vim1, int &vip1, double phi, int largeNV, int smallNV)
+                    vector<int> &ip1, int &vim1, int &vip1, double phi, vector<double> a0, vector<double> l0, vector<double> L, int largeNV, int smallNV)
 {
 
     //delete a particle, re-index all N-dependent vectors to account for this.
