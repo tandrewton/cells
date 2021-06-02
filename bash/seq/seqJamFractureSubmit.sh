@@ -28,10 +28,11 @@ Ptol=$5
 kl=$6
 kb=$7
 att=$8
-partition=$9
-time="${10}"
-numRuns="${11}"
-startSeed="${12}"
+NT=$9
+partition=${10}
+time="${11}"
+numRuns="${12}"
+startSeed="${13}"
 
 numSeedsPerRun=1
 let numSeeds=$numSeedsPerRun*$numRuns
@@ -93,9 +94,10 @@ for seed in `seq $startSeed $numSeedsPerRun $endSeed`; do
         # create output files
         posf=$simdatadir/$filestr.pos
         shapef=$simdatadir/$filestr.shape
+        energyf=$simdatadir/$filestr.energy
 
         # append to runString
-        runString="$runString ; ./$binf $NCELLS $NV $calA0 $phiMin $Ptol $kl $kb $att $runseed $posf $shapef"
+        runString="$runString ; ./$binf $NCELLS $NV $calA0 $phiMin $Ptol $kl $kb $att $runseed $posf $shapef $energyf"
     done
 
     # finish off run string
