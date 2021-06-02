@@ -94,7 +94,7 @@ int main(int argc, char const *argv[])
 
     // read in parameters from command line input
     // test: g++ -O3 -std=c++11 sequential/fracture/jamFracture.cpp -o frac.o
-    // test: ./frac.o 12 20 1.20 0.8 1e-7 1.0 0 0.01 1 3e5 pos.test shape.test energy.test
+    // test: ./frac.o 12 20 1.20 0.8 1e-7 1.0 0 0.01 1 4e5 pos.test shape.test energy.test
     //
     // PARAMETERS:
     // 1. NCELLS 		= # of dpm particles
@@ -1855,7 +1855,7 @@ int main(int argc, char const *argv[])
     for (tt = 0; tt < NT; tt++)
     {
         //after equilibrating, delete the last cell
-        if (tt == 1e5 && NT >= 2e5)
+        if (tt == 2e5 && NT >= 2e5)
         {
             cout << "Deleting particle!\n";
             deleteLastCell(smallN, largeN, NCELLS, NVTOT, cellDOF, vertDOF, szList,
@@ -2350,11 +2350,19 @@ int main(int argc, char const *argv[])
         // print message console, print energy to file
         if (tt % NSKIP == 0)
         {
-            // compute kinetic energy
-            K = 0;
-            for (i = 0; i < vertDOF; i++)
-                K += 0.5 * pow(vvel[i], 2.0);
+            if (tt % int(NSKIP / 100.) == 0)
+            {
+                // compute kinetic energy
+                K = 0;
+                for (i = 0; i < vertDOF; i++)
+                {
+                    K += 0.5 * pow(vvel[i], 2.0);
+                }
 
+                // print energies
+                cout << "\t** PRINTING ENERGIES TO FILE... " << endl;
+                enout << tt << "  " << K << "  " << U << endl;
+            }
             cout << endl
                  << endl;
             cout << "===========================================" << endl;
@@ -2382,10 +2390,6 @@ int main(int argc, char const *argv[])
             // print vertex positions to check placement
             cout << "\t** PRINTING POSITIONS TO FILE... " << endl;
             printPos(jamout, vpos, vrad, a0, calA0, L, cij, nv, szList, phi, NCELLS);
-
-            // print energies
-            cout << "\t** PRINTING ENERGIES TO FILE... " << endl;
-            enout << tt << "  " << K << "  " << U << endl;
         }
     }
 
