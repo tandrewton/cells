@@ -1,7 +1,6 @@
 function [cellTrajectoryData, cell_count] = readFractureSim(fstr)
 %% FUNCTION to read in cell trajectory data from fracture sims given file string
-% -- NOTE: ONLY DIFFERENCE IS THAT THIS INCLUDES VERTEX RADIUS EXPLICITLY
-% -- NOTE: Also this has a larger NFRAMES tolerance
+% -- NOTE: ACCOUNTS FOR ARBITRARY (AND DIFFERING) NUMBER OF CELLS IN EACH FRAME
 
 % print info to console
 finfo = dir(fstr);
