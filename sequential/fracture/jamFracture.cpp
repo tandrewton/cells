@@ -80,7 +80,7 @@ void printPos(ofstream &posout, vector<double> &vpos, vector<double> &vrad, vect
 // retire the last cell's degree of freedom information from all vectors
 void deleteLastCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &cellDOF, int &vertDOF, vector<int> &szList,
                     vector<int> &nv, vector<int> &list, vector<double> &vvel, vector<double> &vpos, vector<double> &vF, vector<int> &im1,
-                    vector<int> &ip1, int &vim1, int &vip1, int largeNV, int smallNV);
+                    vector<int> &ip1, int &vim1, int &vip1, double phi, int largeNV, int smallNV);
 
 // MAIN
 int main(int argc, char const *argv[])
@@ -94,7 +94,7 @@ int main(int argc, char const *argv[])
 
     // read in parameters from command line input
     // test: g++ -O3 -std=c++11 sequential/fracture/jamFracture.cpp -o frac.o
-    // test: ./frac.o 12 20 1.20 0.8 1e-7 1.0 0 0.01 1 4e5 pos.test shape.test energy.test
+    // test: ./frac.o 12 20 1.08 0.4 1e-7 1.0 0 0.01 1 4e5 pos.test shape.test energy.test
     //
     // PARAMETERS:
     // 1. NCELLS 		= # of dpm particles
@@ -760,6 +760,9 @@ int main(int argc, char const *argv[])
     // compress to jamming, relax U and F using FIRE
     while (!jammed && k < kmax)
     {
+        /*//to test energy conservation, break out of loop at lower density and see if velocity verlet implementation is good
+        if (phi > 0.5)
+            break;*/
         // update iterator
         k++;
 
@@ -1859,7 +1862,7 @@ int main(int argc, char const *argv[])
         {
             cout << "Deleting particle!\n";
             deleteLastCell(smallN, largeN, NCELLS, NVTOT, cellDOF, vertDOF, szList,
-                           nv, list, vvel, vpos, vF, im1, ip1, vim1, vip1, largeNV, smallNV);
+                           nv, list, vvel, vpos, vF, im1, ip1, vim1, vip1, phi, largeNV, smallNV);
         }
         // VV POSITION UPDATE
         for (i = 0; i < vertDOF; i++)
@@ -2347,22 +2350,25 @@ int main(int argc, char const *argv[])
             vvel[i] += 0.5 * (vF[i] + vFold[i]) * dt;
             vFold[i] = vF[i];
         }
+
         // print message console, print energy to file
+        if (tt % int(NSKIP / 100.) == 0)
+        {
+            // compute kinetic energy
+            K = 0;
+            for (i = 0; i < vertDOF; i++)
+            {
+                K += 0.5 * pow(vvel[i], 2.0);
+            }
+
+            // print energies
+            cout << "\t** PRINTING ENERGIES TO FILE... " << endl;
+            enout << tt << "  " << K << "  " << U << "  " << K + U << "  " << endl;
+        }
+        // print debug to console, print vertex positions
         if (tt % NSKIP == 0)
         {
-            if (tt % int(NSKIP / 100.) == 0)
-            {
-                // compute kinetic energy
-                K = 0;
-                for (i = 0; i < vertDOF; i++)
-                {
-                    K += 0.5 * pow(vvel[i], 2.0);
-                }
 
-                // print energies
-                cout << "\t** PRINTING ENERGIES TO FILE... " << endl;
-                enout << tt << "  " << K << "  " << U << endl;
-            }
             cout << endl
                  << endl;
             cout << "===========================================" << endl;
@@ -2650,7 +2656,7 @@ void printPos(ofstream &posout, vector<double> &vpos, vector<double> &vrad, vect
 
 void deleteLastCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &cellDOF, int &vertDOF, vector<int> &szList,
                     vector<int> &nv, vector<int> &list, vector<double> &vvel, vector<double> &vpos, vector<double> &vF, vector<int> &im1,
-                    vector<int> &ip1, int &vim1, int &vip1, int largeNV, int smallNV)
+                    vector<int> &ip1, int &vim1, int &vip1, double phi, int largeNV, int smallNV)
 {
 
     //delete a particle, re-index all N-dependent vectors to account for this.
@@ -2698,5 +2704,8 @@ void deleteLastCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &cell
             im1.at(gi) = gindex(ci, vim1, szList);
             ip1.at(gi) = gindex(ci, vip1, szList);
         }
+        // update packing fraction
+        phi += a0[ci] + 0.25 * PI * pow(l0[ci] * del, 2.0) * (0.5 * nv[ci] - 1);
     }
+    phi /= L[0] * L[1];
 }
