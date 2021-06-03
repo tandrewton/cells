@@ -257,8 +257,8 @@ int main(int argc, char const *argv[])
     cout << "=======================================================" << endl
          << endl;
 
-    cout << "		confluence.cpp 								" << endl;
-    cout << "		Jack Treado, 2021   							" << endl;
+    cout << "		jamFracture.cpp 								" << endl;
+    cout << "		Andrew Ton, 2021   							" << endl;
 
     cout << "		NCELLS 		= " << NCELLS << "					" << endl;
     cout << "		NV (small)	= " << smallNV << "						" << endl;
@@ -270,10 +270,12 @@ int main(int argc, char const *argv[])
 
     cout << "		phiMin 		= " << phiMin << "					" << endl
          << endl;
-
+    cout << "       Ptol        = " << Ptol << "                    " << endl
+         << endl;
     cout << "		kl 			= " << kl << "						" << endl;
     cout << "		kb 			= " << kb << "						" << endl;
     cout << "		att 		= " << att << " 					" << endl;
+    cout << "		NT 		= " << NT << " 					" << endl;
     cout << "		seed 		= " << seed << "					" << endl
          << endl;
 
