@@ -883,12 +883,6 @@ int main(int argc, char const *argv[])
         // set length constant (variable due to particle growth)
         rho0 = sqrt(a0.at(0));
 
-        std::cout << fcheck << '\t' << Ftoltmp << '\t' << fireit << '\t' << itmax << '\n';
-        if (fcheck <= Ftoltmp || fireit >= itmax)
-        {
-            std::cout << "Never entering force loop for fire minimization." << '\n';
-            std::cout << fcheck << '\t' << Ftoltmp << '\t' << fireit << '\t' << itmax << '\n';
-        }
         // RELAX FORCES USING FIRE
         while (fcheck > Ftoltmp && fireit < itmax)
         {
@@ -1837,7 +1831,7 @@ int main(int argc, char const *argv[])
     dt = dt0;
 
     //initialize velocities according to temperature T0 and zero total linear momentum.
-    double T0 = 0.0001;
+    double T0 = 1.0e-6;
     double v_cm_x = 0.0;
     double v_cm_y = 0.0;
     for (i = 0; i < vertDOF; i++)
