@@ -753,7 +753,7 @@ int main(int argc, char const *argv[])
     if (Ftol < 0.01 * Ptol)
         Ftoltmp = 0.01 * Ptol;
 
-    std::cout << "Ftoltmp = " << Ftoltmp << '\n';
+    std::cout << "Ftoltmp = " << Ftoltmp << "Ptol = " << Ptol << "Ptol * 0.01 " << Ptol * 0.01 << '\n';
     // total potential energy
     double U = 0.0;
 
