@@ -469,7 +469,7 @@ int main(int argc, char const *argv[])
     // interaction variables
     double xi, yi, xj, yj, dx, dy, fx, fy, rij, sij, ftmp;
 
-    if ((fcheck < Ftol && npPMin > NMIN) || fireit > itmax)
+    if ((fcheck <= Ftol && npPMin >= NMIN) || fireit >= itmax)
     {
         std::cout << "Never entered force loop for initial fire minimization." << '\n';
         std::cout << fcheck << '\t' << Ftol << '\t' << npPMin << '\t' << NMIN << '\t' << fireit << '\t' << itmax << '\n';
