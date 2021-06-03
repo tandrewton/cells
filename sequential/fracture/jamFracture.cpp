@@ -274,7 +274,7 @@ int main(int argc, char const *argv[])
          << endl;
     cout << "		kl 			= " << kl << "						" << endl;
     cout << "		kb 			= " << kb << "						" << endl;
-    cout << "		att 		= " << att << " 					" << endl;
+    cout << "		att (set to 0 for jamming)		= " << att << " 					" << endl;
     cout << "		NT 		= " << NT << " 					" << endl;
     cout << "		seed 		= " << seed << "					" << endl
          << endl;
@@ -567,6 +567,8 @@ int main(int argc, char const *argv[])
             cout << "	** P = " << P << endl;
             cout << "	** Pdir = " << P / (fnorm * vnorm) << endl;
             cout << "	** alpha = " << alpha << endl;
+            cout << "   ** cellDOF = " << cellDOF << endl;
+            cout << "   ** fnorm = " << fnorm << endl;
         }
 
         // Step 1. adjust simulation based on net motion of degrees of freedom
