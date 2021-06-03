@@ -752,8 +752,9 @@ int main(int argc, char const *argv[])
     double Ftoltmp;
     if (Ftol < 0.01 * Ptol)
         Ftoltmp = 0.01 * Ptol;
+    else
+        Ftoltmp = Ftol;
 
-    std::cout << "Ftoltmp = " << Ftoltmp << "Ptol = " << Ptol << "Ptol * 0.01 " << Ptol * 0.01 << '\n';
     // total potential energy
     double U = 0.0;
 
@@ -853,10 +854,7 @@ int main(int argc, char const *argv[])
 
         // update tolerance
         if (phi > 0.6)
-        {
             Ftoltmp = Ftol;
-            std::cout << "phi larger than 0.6, updating Ftoltmp\n";
-        }
         // RESET FIRE VARIABLES
         P = 0;
         fnorm = 0;
