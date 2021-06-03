@@ -666,6 +666,8 @@ int main(int argc, char const *argv[])
         cout << "	** P = " << P << endl;
         cout << "	** Pdir = " << P / (fnorm * vnorm) << endl;
         cout << "	** alpha = " << alpha << endl;
+        cout << "   ** cellDOF = " << cellDOF << endl;
+        cout << "   ** fnorm = " << fnorm << endl;
     }
 
     // initialize vertex positions based on cell centers
