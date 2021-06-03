@@ -753,6 +753,7 @@ int main(int argc, char const *argv[])
     if (Ftol < 0.01 * Ptol)
         Ftoltmp = 0.01 * Ptol;
 
+    std::cout << "Ftoltmp = " << Ftoltmp << '\n';
     // total potential energy
     double U = 0.0;
 
@@ -852,8 +853,10 @@ int main(int argc, char const *argv[])
 
         // update tolerance
         if (phi > 0.6)
+        {
             Ftoltmp = Ftol;
-
+            std::cout << "phi larger than 0.6, updating Ftoltmp\n";
+        }
         // RESET FIRE VARIABLES
         P = 0;
         fnorm = 0;
@@ -882,6 +885,7 @@ int main(int argc, char const *argv[])
         // set length constant (variable due to particle growth)
         rho0 = sqrt(a0.at(0));
 
+        std::cout << fcheck << '\t' << Ftoltmp << '\t' << fireit << '\t' << itmax << '\n';
         if (fcheck <= Ftoltmp || fireit >= itmax)
         {
             std::cout << "Never entering force loop for fire minimization." << '\n';
