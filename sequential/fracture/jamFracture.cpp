@@ -96,6 +96,7 @@ int main(int argc, char const *argv[])
     // test: g++ -O3 -std=c++11 sequential/fracture/jamFracture.cpp -o frac.o
     // test: ./frac.o 12 20 1.08 0.4 1e-7 1.0 0 0.01 1 4e5 pos.test shape.test energy.test
     //
+    //bash/seq/seqJamFractureSubmit.sh 24 24 1.08 0.2 1e-7 1.0 0 0.0 4e6 pi_ohern 0-24:00:00 1 1
     // PARAMETERS:
     // 1. NCELLS 		= # of dpm particles
     // 2. NV 			= # of vertices on smaller cells, larger cells = round(NV*1.4)

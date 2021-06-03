@@ -97,7 +97,7 @@ for seed in `seq $startSeed $numSeedsPerRun $endSeed`; do
         energyf=$simdatadir/$filestr.energy
 
         # append to runString
-        runString="$runString ; ./$binf $NCELLS $NV $calA0 $phiMin $Ptol $kl $kb $att $NT $runseed $posf $shapef $energyf"
+        runString="$runString ; ./$binf $NCELLS $NV $calA0 $phiMin $Ptol $kl $kb $att $runseed $NT $posf $shapef $energyf"
     done
 
     # finish off run string
