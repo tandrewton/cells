@@ -472,7 +472,7 @@ int main(int argc, char const *argv[])
     if ((fcheck < Ftol && npPMin > NMIN) || fireit > itmax)
     {
         std::cout << "Never entered force loop for initial fire minimization." << '\n';
-        std::cout << fcheck << '\t' << Ftol << '\t' << npPmin << '\t' << NMIN << '\t' << fireit << '\t' << itmax << '\n';
+        std::cout << fcheck << '\t' << Ftol << '\t' << npPMin << '\t' << NMIN << '\t' << fireit << '\t' << itmax << '\n';
     }
     // loop until force relaxes
     while ((fcheck > Ftol || npPMin < NMIN) && fireit < itmax)
