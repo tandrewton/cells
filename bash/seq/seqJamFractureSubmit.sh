@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # directories with code
 cellsdir=~/cells
 srcdir=$cellsdir/src
@@ -29,7 +28,7 @@ kl=$6
 kb=$7
 att=$8
 NT=$9
-partition=${10}
+partition="${10}"
 time="${11}"
 numRuns="${12}"
 startSeed="${13}"
