@@ -97,7 +97,7 @@ for seed in `seq $startSeed $numSeedsPerRun $endSeed`; do
         energyf=$simdatadir/$filestr.energy
 
         # append to runString
-        runString="$runString ; ./$binf $NCELLS $NV $calA0 $phiMin $Ptol $kl $kb $att $runseed $NT $posf $shapef $energyf"
+        runString="$runString ; ./$binf $NCELLS $NV $calA0 $phiMin $Ptol $kl $kb $att $NT $runseed $posf $shapef $energyf"
     done
 
     # finish off run string
@@ -156,7 +156,8 @@ sbatch -t $time $slurmf
 # 6. kl
 # 7. kb
 # 8. att
-# 9. partition
-# 10. time
-# 11. number of runs (number of array entries, i.e. arraynum)
-# 12. start seed (end seed determined by number of runs)
+# 9. number of timesteps
+# 10. partition
+# 11. time
+# 12. number of runs (number of array entries, i.e. arraynum)
+# 13. start seed (end seed determined by number of runs)
