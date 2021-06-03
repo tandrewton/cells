@@ -1831,7 +1831,7 @@ int main(int argc, char const *argv[])
     dt = dt0;
 
     //initialize velocities according to temperature T0 and zero total linear momentum.
-    double T0 = 1.0e-6;
+    double T0 = 1.0e-4;
     double v_cm_x = 0.0;
     double v_cm_y = 0.0;
     for (i = 0; i < vertDOF; i++)
