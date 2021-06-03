@@ -469,6 +469,11 @@ int main(int argc, char const *argv[])
     // interaction variables
     double xi, yi, xj, yj, dx, dy, fx, fy, rij, sij, ftmp;
 
+    if ((fcheck < Ftol && npPmin > NMIN) || fireit > itmax)
+    {
+        std::cout << "Never entered force loop for initial fire minimization." << '\n';
+        std::cout << fcheck << '\t' << Ftol << '\t' << npPmin << '\t' << NMIN << '\t' << fireit << '\t' << itmax << '\n';
+    }
     // loop until force relaxes
     while ((fcheck > Ftol || npPMin < NMIN) && fireit < itmax)
     {
@@ -661,6 +666,7 @@ int main(int argc, char const *argv[])
         cout << endl;
         cout << "	** fireit = " << fireit << endl;
         cout << "	** fcheck = " << fcheck << endl;
+        cout << "   ** Ftol   = " << Ftol << endl;
         cout << "	** vnorm = " << vnorm << endl;
         cout << "	** dt = " << dt << endl;
         cout << "	** P = " << P << endl;
