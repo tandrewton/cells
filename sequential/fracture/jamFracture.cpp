@@ -882,10 +882,10 @@ int main(int argc, char const *argv[])
         // set length constant (variable due to particle growth)
         rho0 = sqrt(a0.at(0));
 
-        if (fcheck <= Ftol || fireit >= itmax)
+        if (fcheck <= Ftoltmp || fireit >= itmax)
         {
             std::cout << "Never entering force loop for fire minimization." << '\n';
-            std::cout << fcheck << '\t' << Ftol << '\t' << npPMin << '\t' << NMIN << '\t' << fireit << '\t' << itmax << '\n';
+            std::cout << fcheck << '\t' << Ftoltmp << '\t' << fireit << '\t' << itmax << '\n';
         }
         // RELAX FORCES USING FIRE
         while (fcheck > Ftoltmp && fireit < itmax)
