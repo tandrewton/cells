@@ -27,18 +27,19 @@ Ptol=$5
 kl=$6
 kb=$7
 att=$8
-NT=$9
-partition="${10}"
-time="${11}"
-numRuns="${12}"
-startSeed="${13}"
+B=$9
+NT="${10}"
+partition="${11}"
+time="${12}"
+numRuns="${13}"
+startSeed="${14}"
 
 numSeedsPerRun=1
 let numSeeds=$numSeedsPerRun*$numRuns
 let endSeed=$startSeed+$numSeeds-1
 
 # name strings
-basestr=fracture_N"$NCELLS"_NV"$NV"_calA"$calA0"_kl"$kl"_kb"$kb"_att"$att"
+basestr=fracture_N"$NCELLS"_NV"$NV"_calA"$calA0"_kl"$kl"_kb"$kb"_att"$att"_B"$B"
 runstr="$basestr"_startseed"$startSeed"_endseed"$endSeed"
 
 # make directory specific for this simulation
@@ -48,7 +49,7 @@ mkdir -p $simdatadir
 # compile into binary using packing.h
 binf=bin/"$runstr".o
 mainf=$maindir/fracture/jamFracture.cpp
-echo Running $numSeeds fracture sims of $NCELLS cells with $NV verts, bidisperse , calA0 = $calA0 and attraction parameter att = $att, with $NT timesteps
+echo Running $numSeeds fracture sims of $NCELLS cells with $NV verts, bidisperse , calA0 = $calA0 and attraction parameter att = $att, damping coefficient = $B with $NT timesteps
 
 # run compiler
 rm -f $binf
@@ -96,7 +97,7 @@ for seed in `seq $startSeed $numSeedsPerRun $endSeed`; do
         energyf=$simdatadir/$filestr.energy
 
         # append to runString
-        runString="$runString ; ./$binf $NCELLS $NV $calA0 $phiMin $Ptol $kl $kb $att $runseed $NT $posf $shapef $energyf"
+        runString="$runString ; ./$binf $NCELLS $NV $calA0 $phiMin $Ptol $kl $kb $att $B $runseed $NT $posf $shapef $energyf"
     done
 
     # finish off run string

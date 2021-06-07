@@ -90,13 +90,13 @@ int main(int argc, char const *argv[])
 
     // parameters to be read in
     int NCELLS, largeNV, smallNV, smallN, largeN, NVTOT, cellDOF, vertDOF, seed, NT;
-    double calA0Input, phi, Ptol, phiMin, kl, kb, att, NT_dbl;
+    double calA0Input, phi, Ptol, phiMin, kl, kb, att, B, NT_dbl;
 
     // read in parameters from command line input
     // test: g++ -O3 -std=c++11 sequential/fracture/jamFracture.cpp -o frac.o
-    // test: ./frac.o 12 20 1.08 0.4 1e-7 1.0 0 0.01 1 4e5 pos.test shape.test energy.test
+    // test: ./frac.o 6 20 1.08 0.4 1e-7 1.0 0 0.01 0.05 1 2e4 pos.test shape.test energy.test
     //
-    //bash/seq/seqJamFractureSubmit.sh 24 24 1.08 0.2 1e-7 1.0 0 0.0 4e6 pi_ohern 0-24:00:00 1 1
+    //bash bash/seq/seqJamFractureSubmit.sh 24 24 1.08 0.2 1e-7 1.0 0 0.01 0.05 4e6 pi_ohern 0-12:00:00 1 1
     // PARAMETERS:
     // 1. NCELLS 		= # of dpm particles
     // 2. NV 			= # of vertices on smaller cells, larger cells = round(NV*1.4)
@@ -106,11 +106,12 @@ int main(int argc, char const *argv[])
     // 6. kl 			= perimeter spring constant
     // 7. kb 			= bending spring constant
     // 8. att 			= short-range attraction parameter
-    // 9. seed 			= random number generation seed
-    // 10. NT           = number of timesteps to simulate
-    // 11. positionFile	= position data file string
-    // 12. shapeFile	= shape data file string
-    // 13. energyFile   = energy data file string
+    // 9. B             = damping coefficient
+    // 10. seed 		= random number generation seed
+    // 11. NT           = number of timesteps to simulate
+    // 12. positionFile	= position data file string
+    // 13. shapeFile	= shape data file string
+    // 14. energyFile   = energy data file string
 
     string NCELLS_str = argv[1];
     string NV_str = argv[2];
@@ -120,11 +121,12 @@ int main(int argc, char const *argv[])
     string kl_str = argv[6];
     string kb_str = argv[7];
     string att_str = argv[8];
-    string seed_str = argv[9];
-    string NT_str = argv[10];
-    string positionFile = argv[11];
-    string shapeFile = argv[12];
-    string energyFile = argv[13];
+    string B_str = argv[9];
+    string seed_str = argv[10];
+    string NT_str = argv[11];
+    string positionFile = argv[12];
+    string shapeFile = argv[13];
+    string energyFile = argv[14];
 
     stringstream NCELLSss(NCELLS_str);
     stringstream NVss(NV_str);
@@ -134,6 +136,7 @@ int main(int argc, char const *argv[])
     stringstream kbss(kb_str);
     stringstream Ptolss(Ptol_str);
     stringstream attss(att_str);
+    stringstream Bss(B_str);
     stringstream seedss(seed_str);
     stringstream NTss(NT_str);
 
@@ -145,11 +148,12 @@ int main(int argc, char const *argv[])
     klss >> kl;
     kbss >> kb;
     attss >> att;
+    Bss >> B;
     seedss >> seed;
     NTss >> NT_dbl;
 
-    //attraction value for jamming
-    double att_nve = att;
+    //attraction value for jamming, will be reset for MD
+    double att_md = att;
     att = 0.0;
 
     // cast input NT_dbl to integer
@@ -175,7 +179,7 @@ int main(int argc, char const *argv[])
         return 1;
     }
 
-    // open jam file, which holds jammed configuration (and whatever subsequent NVE and defect stuff performed on it)
+    // open jam file, which holds jammed configuration (and whatever subsequent simulation and defect stuff performed on it)
     ofstream jamout;
     string jamFile = positionFile + ".jam";
     jamout.open(jamFile.c_str());
@@ -185,7 +189,6 @@ int main(int argc, char const *argv[])
         return 1;
     }
 
-    // open jam file, which holds jammed configuration (and whatever subsequent NVE and defect stuff performed on it)
     ofstream enout;
     enout.open(energyFile.c_str());
     if (!enout.is_open())
@@ -1795,7 +1798,7 @@ int main(int argc, char const *argv[])
 
     /* * * * * * * * * * * * * * * * * * 
 
-			NVE
+			DAMPED MD
 
 				DYNAMICS
 
@@ -1805,7 +1808,7 @@ int main(int argc, char const *argv[])
     cout << endl
          << endl;
     cout << "===========================================" << endl;
-    cout << "			N V E " << endl;
+    cout << "			damped MD " << endl;
     cout << "===========================================" << endl;
     cout << endl;
     cout << "	** tt = n/a" << endl;
@@ -1822,12 +1825,12 @@ int main(int argc, char const *argv[])
     cout << "	** dim vpos = " << vpos.size() << endl;
     cout << "	** dim vF = " << vF.size() << endl;
 
-    // NVE VARIABLES
+    // MD VARIABLES
     int tt;
-    double K;
-    att = att_nve;
+    double K, r1, r2, grv;
+    att = att_md;
 
-    // reset for NVE
+    // reset for MD
     dt = dt0;
 
     //initialize velocities according to temperature T0 and zero total linear momentum.
@@ -1837,9 +1840,9 @@ int main(int argc, char const *argv[])
     for (i = 0; i < vertDOF; i++)
     {
         // box muller transform
-        double r1 = drand48();
-        double r2 = drand48();
-        double grv = sqrt(-2.0 * log(r1)) * cos(2.0 * PI * r2);
+        r1 = drand48();
+        r2 = drand48();
+        grv = sqrt(-2.0 * log(r1)) * cos(2.0 * PI * r2);
 
         // draw random velocity
         vvel[i] = sqrt(T0) * grv;
@@ -1982,6 +1985,7 @@ int main(int argc, char const *argv[])
                         dy -= L[1] * round(dy / L[1]);
                         if (dy < shellij)
                         {
+                            //Andrew Ton 06/04/21: Confirmed that the potential is continuous as written
                             rij = sqrt(dx * dx + dy * dy);
                             // if two tumor cells, check for attraction
                             if (rij < shellij && rij > cutij && att > 0.0)
@@ -2358,9 +2362,12 @@ int main(int argc, char const *argv[])
             riy = rip1y;
         }
 
-        // VV VELOCITY UPDATE
+        // Modified (for velocity-dependent friction) VV VELOCITY UPDATE
         for (i = 0; i < vertDOF; i++)
         {
+            //bug: energy readout is going to be wrong since I don't account for the friction here.
+            vF[i] -= (B * vFold[i] * dt / 2);
+            vF[i] /= (1 + B * dt) / 2;
             vvel[i] += 0.5 * (vF[i] + vFold[i]) * dt;
             vFold[i] = vF[i];
         }
@@ -2376,7 +2383,7 @@ int main(int argc, char const *argv[])
             }
 
             // print energies
-            cout << "\t** PRINTING ENERGIES TO FILE... " << endl;
+            cout << "\t** PRINTING ENERGIES TO FILE (does not account for friction)... " << endl;
             enout << tt << "  " << K << "  " << U << "  " << K + U << "  " << endl;
         }
         // print debug to console, print vertex positions
@@ -2386,7 +2393,7 @@ int main(int argc, char const *argv[])
             cout << endl
                  << endl;
             cout << "===========================================" << endl;
-            cout << "			N V E 							" << endl;
+            cout << "			damped MD 							" << endl;
             cout << "===========================================" << endl;
             cout << endl;
             cout << "	** tt = " << tt << endl;
@@ -2416,7 +2423,7 @@ int main(int argc, char const *argv[])
     // close open objects
     shapeout.close();
     posout.close();
-    cout << "	** FINISHED MAIN FOR cellNVE.cpp, ENDING." << endl
+    cout << "	** FINISHED MAIN FOR jamFracture.cpp, ENDING." << endl
          << endl
          << endl;
     return 0;
