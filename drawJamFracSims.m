@@ -10,6 +10,7 @@ close all;
 clc;
 
 addpath("/Users/AndrewTon/Documents/YalePhD/projects/Jamming/CellSim/cells/bash/seq/")
+addpath("/home/at965/cells/bash/seq")
 %CHANGE THESE PARAMETERS AS NEEDED
 N = "24";
 NV = "24";
