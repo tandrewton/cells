@@ -121,7 +121,7 @@ for att = ["0.0","0.01","0.5"]
             else 
                 moviestr = output_dir + 'frac'+fileheader+'seed_'+seed+'.mp4';
                 vobj = VideoWriter(moviestr,'MPEG-4');
-            
+            end
             vobj.FrameRate = 15;
             open(vobj);
         %end
