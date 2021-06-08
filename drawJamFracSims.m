@@ -115,8 +115,13 @@ for att = ["0.0","0.01","0.5"]
         end
 
         if makeAMovie == 1
-            moviestr = output_dir + 'frac'+fileheader+'seed_'+seed+'.mp4';
-            vobj = VideoWriter(moviestr,'MPEG-4');
+            if onCluster == 1
+                moviestr = output_dir + 'frac'+fileheader+'seed_'+seed+'.avi';
+                vobj = VideoWriter(moviestr,'Motion JPEG AVI');
+            else 
+                moviestr = output_dir + 'frac'+fileheader+'seed_'+seed+'.mp4';
+                vobj = VideoWriter(moviestr,'MPEG-4');
+            
             vobj.FrameRate = 15;
             open(vobj);
         %end
