@@ -47,7 +47,7 @@ end
 mkdir(subdir_pipeline);
 mkdir(subdir_output);
 
-for att = ["0.0,0.01,0.5"]
+for att = ["0.0","0.01","0.5"]
     txt = 'N = '+N+', NV = '+NV+', calA_o='+calA+', att='+att+'B='+B;
     %figure(13), clf, hold on, box on;
     for seed = min_seed:max_seed
