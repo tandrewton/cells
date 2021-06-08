@@ -55,11 +55,12 @@ for att = ["0.0,0.01,0.5"]
         fileheader=run_name + "_seed" + seed;
 
         pipeline_dir =  subdir_pipeline + run_name + "/";
-
+    
         output_dir = subdir_output + run_name + "/";
         mkdir(output_dir)
         
         nvestr = pipeline_dir+fileheader+'.pos.jam';
+        disp("nvestr is"+nvestr)
 %         energystr = pipeline_dir+fileheader+'.energy';
 %         energy_file = load(energystr);
 %         energy_file(:,1);
