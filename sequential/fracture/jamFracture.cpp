@@ -2366,7 +2366,8 @@ int main(int argc, char const *argv[])
         for (i = 0; i < vertDOF; i++)
         {
             //bug: energy readout is going to be wrong since I don't account for the friction here.
-            vF[i] -= (B * vFold[i] * dt / 2);
+            //obtained by taylor expansion of velocity verlet, taking care about a velocity dependent force.
+            vF[i] -= (B * vvel[i] + B * vFold[i] * dt / 2);
             vF[i] /= (1 + B * dt / 2);
             vvel[i] += 0.5 * (vF[i] + vFold[i]) * dt;
             vFold[i] = vF[i];
