@@ -8,4 +8,4 @@
 
 module load MATLAB/2016b
 #matlab -nodisplay -nosplash -r YourFunction < /dev/null
-matlab -nodisplay -nosplash -r "drawJamFracSims.m"
+matlab -nodisplay -nosplash -r < drawJamFracSims.m
