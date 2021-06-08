@@ -40,7 +40,7 @@ if onCluster == 1
     %pwd should read /home/at965/cells
     pc_dir = "/home/at965/cells"
     subdir_pipeline = "/gpfs/loomis/project/fas/ohern/at965/cells/fracture"
-    subdir_output = pc_dir+"matlab_out"
+    subdir_output = pc_dir+"/matlab_out"
 end
 
 mkdir(subdir_pipeline);
