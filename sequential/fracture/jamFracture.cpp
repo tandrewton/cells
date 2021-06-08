@@ -2367,7 +2367,7 @@ int main(int argc, char const *argv[])
         {
             //bug: energy readout is going to be wrong since I don't account for the friction here.
             vF[i] -= (B * vFold[i] * dt / 2);
-            vF[i] /= (1 + B * dt) / 2;
+            vF[i] /= (1 + B * dt / 2);
             vvel[i] += 0.5 * (vF[i] + vFold[i]) * dt;
             vFold[i] = vF[i];
         }
