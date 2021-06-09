@@ -64,7 +64,7 @@ echo \#SBATCH -J $job_name >> $slurmf
 echo \#SBATCH --mail-type=END,FAIL >> $slurmf
 echo \#SBATCH --mail-user=andrewtondata@gmail.com >> $slurmf
 echo \#SBATCH -o $runout >> $slurmf
-echo matlab -nodisplay -nosplash -r 'try drawJamFracSims($NCELLS, $NV, $calA0, $kl, $kb, $att, $B, $startSeed, $numRuns, $makePlots, $makeAMovie, $onCluster)' >> $slurmf
+echo matlab -nodisplay -nosplash -batch "drawJamFracSims('$NCELLS', '$NV', '$calA0', '$kl', '$kb', '$att', '$B', '$startSeed', '$numRuns', '$makePlots', '$makeAMovie', '$onCluster')" >> $slurmf
 cat $slurmf
 
 # run sbatch file
