@@ -64,7 +64,7 @@ echo \#SBATCH -J $job_name >> $slurmf
 echo \#SBATCH --mail-type=END,FAIL >> $slurmf
 echo \#SBATCH --mail-user=andrewtondata@gmail.com >> $slurmf
 echo \#SBATCH -o $runout >> $slurmf
-echo module load MATLAB/2020b
+echo module load MATLAB/2020b >> $slurmf
 echo matlab -batch "drawJamFracSims($NCELLS, $NV, $calA0, $kl, $kb, $att, $B, $startSeed, $numRuns, $makePlots, $makeAMovie, $onCluster)" >> $slurmf
 cat $slurmf
 
