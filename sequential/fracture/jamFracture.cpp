@@ -278,10 +278,9 @@ int main(int argc, char const *argv[])
     cout << "		kl 			= " << kl << "						" << endl;
     cout << "		kb 			= " << kb << "						" << endl;
     cout << "		att (set to 0 for jamming)		= " << att << " " << endl;
-    cout << "		 B		= " << B << " 
-                                        " << endl;
-        cout
-         << "		NT 		= " << NT << " 					" << endl;
+    cout << "		 B		= " << B << " " << endl;
+    cout
+        << "		NT 		= " << NT << " 					" << endl;
     cout << "		seed 		= " << seed << "					" << endl
          << endl;
 
