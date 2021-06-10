@@ -277,8 +277,11 @@ int main(int argc, char const *argv[])
          << endl;
     cout << "		kl 			= " << kl << "						" << endl;
     cout << "		kb 			= " << kb << "						" << endl;
-    cout << "		att (set to 0 for jamming)		= " << att << " 					" << endl;
-    cout << "		NT 		= " << NT << " 					" << endl;
+    cout << "		att (set to 0 for jamming)		= " << att << " " << endl;
+    cout << "		 B		= " << B << " 
+                                        " << endl;
+        cout
+         << "		NT 		= " << NT << " 					" << endl;
     cout << "		seed 		= " << seed << "					" << endl
          << endl;
 
@@ -1579,14 +1582,13 @@ int main(int argc, char const *argv[])
             else
             {
                 std::cout << "error: undercompressed and overcompressed flags are not set.\n";
-                return 1;
             }
         }
         else
         {
             if (rL < 0)
             {
-                // if first undercompressed, save last overcompressed state, beging root search
+                // if first undercompressed, save last overcompressed state, begin root search
                 if (undercompressed)
                 {
                     // current = new lower bound length scale r
@@ -1627,7 +1629,6 @@ int main(int argc, char const *argv[])
                 else
                 {
                     std::cout << "error: undercompressed and overcompressed flags are not set.\n";
-                    return 1;
                 }
             }
             else
