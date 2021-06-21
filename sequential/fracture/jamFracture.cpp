@@ -2750,7 +2750,7 @@ void deleteMiddleCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &ce
     int delete_index = getCenterCellIndex(NCELLS, nv, vpos, L, szList);
     // isDeleteLarge is true if we are deleting a large particle, false if deleting a small particle
     isDeleteLarge = (nv[delete_index] == largeNV);
-    if (nv[delete_index] != largeNV || nv[delete_index] != smallNV) throw std::invalid_argument("nv does not correspond to large or small\n");
+    if (nv[delete_index] != largeNV && nv[delete_index] != smallNV) throw std::invalid_argument("nv does not correspond to large or small\n");
     if (isDeleteLarge){
         largeN -= 1;
     }
