@@ -57,7 +57,7 @@ echo Running $numSeeds fracture sims of $NCELLS cells with $NV verts, bidisperse
 # run compiler
 rm -f $binf
 g++ --std=c++11 -O3 $mainf -o $binf
-echo compiling with : g++ --std=c++14 -O3 $mainf -o $binf
+echo compiling with : g++ --std=c++11 -O3 $mainf -o $binf
 
 # check compilation
 if [[ ! -f $binf ]]
