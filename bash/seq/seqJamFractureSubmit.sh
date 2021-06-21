@@ -1,5 +1,8 @@
 #!/bin/bash
 # directories with code
+
+#example call: bash bash/seq/seqJamFractureSubmit.sh 24 24 1.08 0.2 1e-7 1.0 0 0.0 0.05 4e6 pi_ohern,day,scavenge 0-12:00:00 1 1
+
 cellsdir=~/cells
 srcdir=$cellsdir/src
 maindir=$cellsdir/sequential
@@ -54,7 +57,7 @@ echo Running $numSeeds fracture sims of $NCELLS cells with $NV verts, bidisperse
 # run compiler
 rm -f $binf
 g++ --std=c++11 -O3 $mainf -o $binf
-echo compiling with : g++ --std=c++11 -O3 $mainf -o $binf
+echo compiling with : g++ --std=c++14 -O3 $mainf -o $binf
 
 # check compilation
 if [[ ! -f $binf ]]
