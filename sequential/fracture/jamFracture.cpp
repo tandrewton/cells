@@ -24,6 +24,8 @@
 #include <vector>
 #include <cmath>
 #include <fstream>
+#include <stdexcept>
+#include <algorithm>
 
 #define NDIM 2
 #define NNN 4
