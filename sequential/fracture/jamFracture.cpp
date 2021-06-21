@@ -82,6 +82,9 @@ void deleteLastCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &cell
                     vector<int> &nv, vector<int> &list, vector<double> &vvel, vector<double> &vpos, vector<double> &vF, vector<int> &im1,
                     vector<int> &ip1, int &vim1, int &vip1, double phi, vector<double> a0, vector<double> l0, vector<double> L, int largeNV, int smallNV);
 
+// zero momentum of system
+void zeroMomentum(int vertDOF, int ndim, int NVTOT, std::vector<double> &vvel);
+
 // MAIN
 int main(int argc, char const *argv[])
 {
@@ -1846,41 +1849,35 @@ int main(int argc, char const *argv[])
 
         // draw random velocity
         vvel[i] = sqrt(T0) * grv;
-        if (i % NDIM == 0)
-        {
-            v_cm_x += vvel[i];
-        }
-        else if (i % NDIM == 1)
-        {
-            v_cm_y += vvel[i];
-        }
-        else
-        {
-            cout << "Error with number of dimensions in velocity initialization, exiting...\n";
-            return 1;
-        }
     }
-    for (i = 0; i < vertDOF; i++)
-    {
-        if (i % NDIM == 0)
-        {
-            vvel[i] -= v_cm_x / NVTOT;
-        }
-        else
-        {
-            vvel[i] -= v_cm_y / NVTOT;
-        }
-    }
+    // zero linear momentum of all vertex DOFs
+    zeroMomentum(vertDOF, NDIM, NVTOT, vvel);
     cout << "\t** Looping over time for NT = " << NT << " time steps with dt = " << dt << endl;
+
+    //timestep at which deletion occurs
+    int deletionStep = 2e5;
+
+    //request zero momentum, since initialized with finite momentum
+    bool isZeroMomentumNextStep = 1;
+
     for (tt = 0; tt < NT; tt++)
     {
-        //after equilibrating, delete the last cell
-        if (tt == 2e5 && NT >= 2e5)
+        // zero momentum
+        if (isZeroMomentumNextStep == 1)
+        {
+            isZeroMomentumNextStep = 0;
+            zeroMomentum(vertDOF, NDIM, NVTOT, vvel);
+        }
+
+        //delete the last cell (last cell by index), request zero momentum after next integration step? 
+        if (tt == deletionStep && NT >= 2*deletionStep)
         {
             cout << "Deleting particle!\n";
             deleteLastCell(smallN, largeN, NCELLS, NVTOT, cellDOF, vertDOF, szList,
                            nv, list, vvel, vpos, vF, im1, ip1, vim1, vip1, phi, a0, l0, L, largeNV, smallNV);
+            isZeroMomentumNextStep = 1;
         }
+        
         // VV POSITION UPDATE
         for (i = 0; i < vertDOF; i++)
         {
@@ -2730,4 +2727,38 @@ void deleteLastCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &cell
         phi += a0[ci] + 0.25 * PI * pow(l0[ci] * del, 2.0) * (0.5 * nv[ci] - 1);
     }
     phi /= L[0] * L[1];
+}
+
+void zeroMomentum(int vertDOF, int ndim, int NVTOT, std::vector<double> &vvel){
+    //input: # vertex degrees of freedom, # dimensions, # vertices in simulation box, vector of vertex velocities
+    //output: void, modifies velocities to have zero momentum
+    // zero linear momentum of all vertex DOFs
+    double v_cm_x = 0.0;
+    double v_cm_y = 0.0;
+    for (int i = 0; i < vertDOF; i++)
+    {
+        if (i % NDIM == 0)
+        {
+            v_cm_x += vvel[i];
+        }
+        else if (i % NDIM == 1)
+        {
+            v_cm_y += vvel[i];
+        }
+        else
+        {
+            throw std::invalid_argument("Error with number of dimensions in velocity initialization, exiting...\n");
+        }
+    }
+    for (int i = 0; i < vertDOF; i++)
+    {
+        if (i % NDIM == 0)
+        {
+            vvel[i] -= v_cm_x / NVTOT;
+        }
+        else
+        {
+            vvel[i] -= v_cm_y / NVTOT;
+        }
+    }
 }
