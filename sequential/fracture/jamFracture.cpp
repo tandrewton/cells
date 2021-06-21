@@ -82,8 +82,14 @@ void deleteLastCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &cell
                     vector<int> &nv, vector<int> &list, vector<double> &vvel, vector<double> &vpos, vector<double> &vF, vector<int> &im1,
                     vector<int> &ip1, int &vim1, int &vip1, double phi, vector<double> a0, vector<double> l0, vector<double> L, int largeNV, int smallNV);
 
+void deleteMiddleCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &cellDOF, int &vertDOF, vector<int> &szList,
+                    vector<int> &nv, vector<int> &list, vector<double> &vvel, vector<double> &vpos, vector<double> &vF, vector<int> &im1,
+                    vector<int> &ip1, int &vim1, int &vip1, double phi, vector<double> a0, vector<double> l0, vector<double> L, int largeNV, int smallNV);
+
 // zero momentum of system
 void zeroMomentum(int vertDOF, int ndim, int NVTOT, std::vector<double> &vvel);
+
+int getCenterCellIndex(int &NCELLS, vector<int> nv, vector<double> &vpos, vector<double> L, vector<int> &szList);
 
 // MAIN
 int main(int argc, char const *argv[])
@@ -97,7 +103,7 @@ int main(int argc, char const *argv[])
 
     // read in parameters from command line input
     // test: g++ -O3 -std=c++11 sequential/fracture/jamFracture.cpp -o frac.o
-    // test: ./frac.o 6 20 1.08 0.4 1e-7 1.0 0 0.01 0.05 1 2e4 pos.test shape.test energy.test
+    // test: ./frac.o 12 20 1.08 0.4 1e-7 1.0 0 0.01 0.05 1 4e5 pos.test shape.test energy.test
     //
     //bash bash/seq/seqJamFractureSubmit.sh 24 24 1.08 0.2 1e-7 1.0 0 0.01 0.05 4e6 pi_ohern 0-12:00:00 1 1
     // PARAMETERS:
@@ -1870,10 +1876,12 @@ int main(int argc, char const *argv[])
         }
 
         //delete the last cell (last cell by index), request zero momentum after next integration step? 
-        if (tt == deletionStep && NT >= 2*deletionStep)
+        if (tt > 0 && int(tt*dt) % 500 == 0)
         {
             cout << "Deleting particle!\n";
-            deleteLastCell(smallN, largeN, NCELLS, NVTOT, cellDOF, vertDOF, szList,
+            //deleteLastCell(smallN, largeN, NCELLS, NVTOT, cellDOF, vertDOF, szList,
+            //               nv, list, vvel, vpos, vF, im1, ip1, vim1, vip1, phi, a0, l0, L, largeNV, smallNV);
+            deleteMiddleCell(smallN, largeN, NCELLS, NVTOT, cellDOF, vertDOF, szList,
                            nv, list, vvel, vpos, vF, im1, ip1, vim1, vip1, phi, a0, l0, L, largeNV, smallNV);
             isZeroMomentumNextStep = 1;
         }
@@ -2729,6 +2737,68 @@ void deleteLastCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &cell
     phi /= L[0] * L[1];
 }
 
+void deleteMiddleCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &cellDOF, int &vertDOF, vector<int> &szList,
+                    vector<int> &nv, vector<int> &list, vector<double> &vvel, vector<double> &vpos, vector<double> &vF, vector<int> &im1,
+                    vector<int> &ip1, int &vim1, int &vip1, double phi, vector<double> a0, vector<double> l0, vector<double> L, int largeNV, int smallNV)
+{
+
+    //delete particle nearest to the center, re-index all N-dependent vectors to account for this.
+    //easily modifiable to delete particles near any specified point. just edit getCenterCellIndex. 
+    bool isDeleteLarge;
+    int delete_index = getCenterCellIndex(NCELLS, nv, vpos, L, szList);
+    // isDeleteLarge is true if we are deleting a large particle, false if deleting a small particle
+    isDeleteLarge = (nv[delete_index] == largeNV);
+    if (nv[delete_index] != largeNV || nv[delete_index] != smallNV) throw std::invalid_argument("nv does not correspond to large or small\n");
+    if (isDeleteLarge){
+        largeN -= 1;
+    }
+    else smallN -= 1;
+    NCELLS -= 1;
+
+    // total number of vertices
+    NVTOT = smallNV * smallN + largeNV * largeN;
+
+    // degree of freedom counts
+    cellDOF = NDIM * NCELLS;
+    vertDOF = NDIM * NVTOT;
+
+    //adjust szList and nv, which keep track of global vertex indices
+    szList.erase(szList.begin() + delete_index);
+    nv.erase(nv.begin() + delete_index);
+    //remove one largeNV's worth of indices from vectors
+    for (int i = 0; i < largeNV; i++)
+    {
+        list.erase(list.begin() + delete_index);
+        for (int j = 0; j < NDIM; j++)
+        {
+            vvel.erase(vvel.begin() + delete_index);
+            vpos.erase(vpos.begin() + delete_index);
+            vF.erase(vF.begin() + delete_index);
+        }
+    }
+
+    // save list of adjacent vertices
+    im1 = vector<int>(NVTOT, 0);
+    ip1 = vector<int>(NVTOT, 0);
+    for (int ci = 0; ci < NCELLS; ci++)
+    {
+        for (int vi = 0; vi < nv.at(ci); vi++)
+        {
+            // wrap local indices
+            vim1 = (vi - 1 + nv.at(ci)) % nv.at(ci);
+            vip1 = (vi + 1) % nv.at(ci);
+
+            // get global wrapped indices
+            int gi = gindex(ci, vi, szList);
+            im1.at(gi) = gindex(ci, vim1, szList);
+            ip1.at(gi) = gindex(ci, vip1, szList);
+        }
+        // update packing fraction
+        phi += a0[ci] + 0.25 * PI * pow(l0[ci] * del, 2.0) * (0.5 * nv[ci] - 1);
+    }
+    phi /= L[0] * L[1];
+}
+
 void zeroMomentum(int vertDOF, int ndim, int NVTOT, std::vector<double> &vvel){
     //input: # vertex degrees of freedom, # dimensions, # vertices in simulation box, vector of vertex velocities
     //output: void, modifies velocities to have zero momentum
@@ -2761,4 +2831,42 @@ void zeroMomentum(int vertDOF, int ndim, int NVTOT, std::vector<double> &vvel){
             vvel[i] -= v_cm_y / NVTOT;
         }
     }
+}
+
+int getCenterCellIndex(int &NCELLS, vector<int> nv, vector<double> &vpos, vector<double> L, vector<int> &szList)
+{
+    //loop through global indices, compute all centers of mass
+    //distance (squared) of centers of mass to origin
+    vector<double> distanceSq = vector<double>(NCELLS, 1e7);
+    for (int ci = 0; ci < NCELLS; ci++)
+    {
+        // first global index for ci
+        int gi = szList.at(ci);
+
+        // compute cell center of mass
+        double xi = vpos[NDIM * gi];
+        double yi = vpos[NDIM * gi + 1];
+        double cx = xi;
+        double cy = yi;
+        for (int vi = 1; vi < nv.at(ci); vi++)
+        {
+            double dx = vpos.at(NDIM * (gi + vi)) - xi;
+            dx -= L[0] * round(dx / L[0]);
+
+            double dy = vpos.at(NDIM * (gi + vi) + 1) - yi;
+            dy -= L[1] * round(dy / L[1]);
+
+            xi += dx;
+            yi += dy;
+
+            cx += xi;
+            cy += yi;
+        }
+        cx /= nv.at(ci);
+        cy /= nv.at(ci);
+        distanceSq[ci] = pow(cx, 2) + pow(cy, 2); 
+    }
+    //compute argmin
+    int argmin = std::distance(distanceSq.begin(), std::min_element(distanceSq.begin(), distanceSq.end()));
+    return argmin;
 }
