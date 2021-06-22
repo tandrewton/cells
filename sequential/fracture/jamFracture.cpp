@@ -26,6 +26,7 @@
 #include <fstream>
 #include <stdexcept>
 #include <algorithm>
+#include <numeric>
 
 #define NDIM 2
 #define NNN 4
@@ -105,7 +106,7 @@ int main(int argc, char const *argv[])
 
     // read in parameters from command line input
     // test: g++ -O3 -std=c++11 sequential/fracture/jamFracture.cpp -o frac.o
-    // test: ./frac.o 12 20 1.08 0.6 1e-7 1.0 0 0.5 0.01 1 4e5 pos.test shape.test energy.test
+    // test: ./frac.o 12 20 1.08 0.8 1e-7 1.0 0 0.5 0.01 1 2e5 pos.test shape.test energy.test
     //
     //bash bash/seq/seqJamFractureSubmit.sh 24 24 1.08 0.2 1e-7 1.0 0 0.01 0.05 4e6 pi_ohern 0-12:00:00 1 1
     // PARAMETERS:
@@ -1880,7 +1881,7 @@ int main(int argc, char const *argv[])
         if (tt > 0 && tt % int(500 / dt) == 0 && NCELLS > 4)
         {
             if (NCELLS <= 10)
-                std::cout << "getting low on cells, dangerous!\n";
+                std::cout << "getting low on cells, warning!\n";
             cout << "Deleting particle!\n";
             //deleteLastCell(smallN, largeN, NCELLS, NVTOT, cellDOF, vertDOF, szList,
             //               nv, list, vvel, vpos, vF, im1, ip1, vim1, vip1, phi, a0, l0, L, largeNV, smallNV);
@@ -2783,7 +2784,6 @@ void deleteMiddleCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &ce
 
     //szList stores gi of each cell. To account for a deleted particle, delete one index, then subtract numVerts from successive indices
     //This would be a lot easier in python... - Andrew
-    std::cout << "delete_index = " << delete_index << '\n';
     for (auto i = szList.begin() + delete_index; i != szList.end(); i++)
     {
         *i -= numVerts;
@@ -2798,9 +2798,14 @@ void deleteMiddleCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &ce
 
     list.erase(list.begin() + delete_global_index, list.begin() + delete_global_index + numVerts - 1);
 
-    vvel.erase(vvel.begin() + NDIM * delete_global_index, vvel.begin() + NDIM * (delete_global_index + numVerts) - 1);
-    vpos.erase(vpos.begin() + NDIM * delete_global_index, vpos.begin() + NDIM * (delete_global_index + numVerts) - 1);
-    vF.erase(vF.begin() + NDIM * delete_global_index, vF.begin() + NDIM * (delete_global_index + numVerts) - 1);
+    //sum up number of vertices of each cell until reaching the cell to delete
+
+    //int sumVertsUntilGlobalIndex = std::accumulate(szList.begin(), szList.begin() + delete_index, 0);
+    int sumVertsUntilGlobalIndex = szList[delete_index];
+
+    vvel.erase(vvel.begin() + NDIM * sumVertsUntilGlobalIndex, vvel.begin() + NDIM * (sumVertsUntilGlobalIndex + numVerts));
+    vpos.erase(vpos.begin() + NDIM * sumVertsUntilGlobalIndex, vpos.begin() + NDIM * (sumVertsUntilGlobalIndex + numVerts));
+    vF.erase(vF.begin() + NDIM * sumVertsUntilGlobalIndex, vF.begin() + NDIM * (sumVertsUntilGlobalIndex + numVerts));
     // save list of adjacent vertices
     im1 = vector<int>(NVTOT, 0);
     ip1 = vector<int>(NVTOT, 0);
