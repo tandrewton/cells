@@ -85,8 +85,8 @@ void deleteLastCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &cell
                     vector<int> &ip1, int &vim1, int &vip1, double phi, vector<double> a0, vector<double> l0, vector<double> L, int largeNV, int smallNV);
 
 void deleteMiddleCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &cellDOF, int &vertDOF, vector<int> &szList,
-                    vector<int> &nv, vector<int> &list, vector<double> &vvel, vector<double> &vpos, vector<double> &vF, vector<int> &im1,
-                    vector<int> &ip1, int &vim1, int &vip1, double phi, vector<double> a0, vector<double> l0, vector<double> L, int largeNV, int smallNV);
+                      vector<int> &nv, vector<int> &list, vector<double> &vvel, vector<double> &vpos, vector<double> &vF, vector<int> &im1,
+                      vector<int> &ip1, int &vim1, int &vip1, double phi, vector<double> a0, vector<double> l0, vector<double> L, int largeNV, int smallNV);
 
 // zero momentum of system
 void zeroMomentum(int vertDOF, int ndim, int NVTOT, std::vector<double> &vvel);
@@ -105,7 +105,7 @@ int main(int argc, char const *argv[])
 
     // read in parameters from command line input
     // test: g++ -O3 -std=c++11 sequential/fracture/jamFracture.cpp -o frac.o
-    // test: ./frac.o 12 20 1.08 0.4 1e-7 1.0 0 0.01 0.05 1 4e5 pos.test shape.test energy.test
+    // test: ./frac.o 12 20 1.08 0.6 1e-7 1.0 0 0.5 0.01 1 4e5 pos.test shape.test energy.test
     //
     //bash bash/seq/seqJamFractureSubmit.sh 24 24 1.08 0.2 1e-7 1.0 0 0.01 0.05 4e6 pi_ohern 0-12:00:00 1 1
     // PARAMETERS:
@@ -1513,7 +1513,7 @@ int main(int argc, char const *argv[])
             cout << "		M I N I M I Z A T I O N 	" << endl;
             cout << "	C O N V E R G E D! 				" << endl;
             cout << "	** at k = " << k << " 			" << endl;
-            cout << "   ** line 1436 in code " << endl;
+            cout << "   ** line 1516 in code " << endl;
             cout << "===========================================" << endl;
             cout << endl;
             cout << "	** fireit 	= " << fireit << endl;
@@ -1876,18 +1876,19 @@ int main(int argc, char const *argv[])
             isZeroMomentumNextStep = 0;
             zeroMomentum(vertDOF, NDIM, NVTOT, vvel);
         }
-
-        //delete the last cell (last cell by index), request zero momentum after next integration step? 
-        if (tt > 0 && int(tt*dt) % 500 == 0)
+        //delete the last cell (last cell by index), request zero momentum after next integration step
+        if (tt > 0 && tt % int(500 / dt) == 0 && NCELLS > 4)
         {
+            if (NCELLS <= 10)
+                std::cout << "getting low on cells, dangerous!\n";
             cout << "Deleting particle!\n";
             //deleteLastCell(smallN, largeN, NCELLS, NVTOT, cellDOF, vertDOF, szList,
             //               nv, list, vvel, vpos, vF, im1, ip1, vim1, vip1, phi, a0, l0, L, largeNV, smallNV);
             deleteMiddleCell(smallN, largeN, NCELLS, NVTOT, cellDOF, vertDOF, szList,
-                           nv, list, vvel, vpos, vF, im1, ip1, vim1, vip1, phi, a0, l0, L, largeNV, smallNV);
+                             nv, list, vvel, vpos, vF, im1, ip1, vim1, vip1, phi, a0, l0, L, largeNV, smallNV);
             isZeroMomentumNextStep = 1;
         }
-        
+
         // VV POSITION UPDATE
         for (i = 0; i < vertDOF; i++)
         {
@@ -2740,22 +2741,34 @@ void deleteLastCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &cell
 }
 
 void deleteMiddleCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &cellDOF, int &vertDOF, vector<int> &szList,
-                    vector<int> &nv, vector<int> &list, vector<double> &vvel, vector<double> &vpos, vector<double> &vF, vector<int> &im1,
-                    vector<int> &ip1, int &vim1, int &vip1, double phi, vector<double> a0, vector<double> l0, vector<double> L, int largeNV, int smallNV)
+                      vector<int> &nv, vector<int> &list, vector<double> &vvel, vector<double> &vpos, vector<double> &vF, vector<int> &im1,
+                      vector<int> &ip1, int &vim1, int &vip1, double phi, vector<double> a0, vector<double> l0, vector<double> L, int largeNV, int smallNV)
 {
 
     //delete particle nearest to the center, re-index all N-dependent vectors to account for this.
-    //easily modifiable to delete particles near any specified point. just edit getCenterCellIndex. 
+    //easily modifiable to delete particles near any specified point. just edit getCenterCellIndex.
     bool isDeleteLarge;
+
+    //cell index of center cell, to delete
     int delete_index = getCenterCellIndex(NCELLS, nv, vpos, L, szList);
+
     // isDeleteLarge is true if we are deleting a large particle, false if deleting a small particle
     isDeleteLarge = (nv[delete_index] == largeNV);
-    if (nv[delete_index] != largeNV && nv[delete_index] != smallNV) throw std::invalid_argument("nv does not correspond to large or small\n");
-    if (isDeleteLarge){
+    if (nv[delete_index] != largeNV && nv[delete_index] != smallNV)
+        throw std::invalid_argument("nv does not correspond to large or small\n");
+    if (isDeleteLarge)
+    {
         largeN -= 1;
     }
-    else smallN -= 1;
+    else
+        smallN -= 1;
     NCELLS -= 1;
+
+    // number of vertices to delete
+    int numVerts = largeNV * isDeleteLarge + smallNV * !isDeleteLarge;
+
+    std::cout << "in deleteMiddleCell, \n";
+    std::cout << "largeN = " << largeN << "smallN = " << smallN << "NCELLS = " << NCELLS << '\n';
 
     // total number of vertices
     NVTOT = smallNV * smallN + largeNV * largeN;
@@ -2764,21 +2777,30 @@ void deleteMiddleCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &ce
     cellDOF = NDIM * NCELLS;
     vertDOF = NDIM * NVTOT;
 
+    std::cout << "NVTOT, cellDOF, vertDOF = " << NVTOT << ", " << cellDOF << ", " << vertDOF << '\n';
+
     //adjust szList and nv, which keep track of global vertex indices
-    szList.erase(szList.begin() + delete_index);
-    nv.erase(nv.begin() + delete_index);
-    //remove one largeNV's worth of indices from vectors
-    for (int i = 0; i < largeNV; i++)
+
+    //szList stores gi of each cell. To account for a deleted particle, delete one index, then subtract numVerts from successive indices
+    //This would be a lot easier in python... - Andrew
+    std::cout << "delete_index = " << delete_index << '\n';
+    for (auto i = szList.begin() + delete_index; i != szList.end(); i++)
     {
-        list.erase(list.begin() + delete_index);
-        for (int j = 0; j < NDIM; j++)
-        {
-            vvel.erase(vvel.begin() + delete_index);
-            vpos.erase(vpos.begin() + delete_index);
-            vF.erase(vF.begin() + delete_index);
-        }
+        *i -= numVerts;
     }
 
+    szList.erase(szList.begin() + delete_index);
+
+    nv.erase(nv.begin() + delete_index);
+    //remove one largeNV or smallNV worth of indices from vectors
+
+    int delete_global_index = gindex(delete_index, 0, szList);
+
+    list.erase(list.begin() + delete_global_index, list.begin() + delete_global_index + numVerts - 1);
+
+    vvel.erase(vvel.begin() + NDIM * delete_global_index, vvel.begin() + NDIM * (delete_global_index + numVerts) - 1);
+    vpos.erase(vpos.begin() + NDIM * delete_global_index, vpos.begin() + NDIM * (delete_global_index + numVerts) - 1);
+    vF.erase(vF.begin() + NDIM * delete_global_index, vF.begin() + NDIM * (delete_global_index + numVerts) - 1);
     // save list of adjacent vertices
     im1 = vector<int>(NVTOT, 0);
     ip1 = vector<int>(NVTOT, 0);
@@ -2799,9 +2821,11 @@ void deleteMiddleCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &ce
         phi += a0[ci] + 0.25 * PI * pow(l0[ci] * del, 2.0) * (0.5 * nv[ci] - 1);
     }
     phi /= L[0] * L[1];
+    std::cout << "reached end of wrap outer loop, exiting function \n";
 }
 
-void zeroMomentum(int vertDOF, int ndim, int NVTOT, std::vector<double> &vvel){
+void zeroMomentum(int vertDOF, int ndim, int NVTOT, std::vector<double> &vvel)
+{
     //input: # vertex degrees of freedom, # dimensions, # vertices in simulation box, vector of vertex velocities
     //output: void, modifies velocities to have zero momentum
     // zero linear momentum of all vertex DOFs
@@ -2866,7 +2890,7 @@ int getCenterCellIndex(int &NCELLS, vector<int> nv, vector<double> &vpos, vector
         }
         cx /= nv.at(ci);
         cy /= nv.at(ci);
-        distanceSq[ci] = pow(cx, 2) + pow(cy, 2); 
+        distanceSq[ci] = pow(cx, 2) + pow(cy, 2);
     }
     //compute argmin
     int argmin = std::distance(distanceSq.begin(), std::min_element(distanceSq.begin(), distanceSq.end()));
