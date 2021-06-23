@@ -80,21 +80,19 @@ double perimeter(vector<double> &vpos, int ci, vector<double> &L, vector<int> &n
 // print to file
 void printPos(ofstream &posout, vector<double> &vpos, vector<double> &vrad, vector<double> &a0, vector<double> &calA0, vector<double> &L, vector<int> &cij, vector<int> &nv, vector<int> &szList, double phi, int NCELLS);
 
-// retire the last cell's degree of freedom information from all vectors
-void deleteLastCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &cellDOF, int &vertDOF, vector<int> &szList,
-                    vector<int> &nv, vector<int> &list, vector<double> &vvel, vector<double> &vpos, vector<double> &vF, vector<int> &im1,
-                    vector<int> &ip1, int &vim1, int &vip1, double phi, vector<double> a0, vector<double> l0, vector<double> L, int largeNV, int smallNV);
+// retire the (nearest-to-specified-point) cell's degree of freedom information from all vectors
 
-void deleteMiddleCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &cellDOF, int &vertDOF, vector<int> &szList,
-                      vector<int> &nv, vector<int> &list, vector<double> &vvel, vector<double> &vpos, vector<double> &vF,
-                      vector<double> &vFold, vector<double> &vrad, vector<int> &im1, vector<int> &ip1, int &vim1, int &vip1,
-                      double phi, vector<double> &a0, vector<double> &l0, int &NCTCS, vector<int> &cij,
-                      vector<double> &calA0, vector<double> L, int largeNV, int smallNV);
+void deleteCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &cellDOF, int &vertDOF, vector<int> &szList,
+                vector<int> &nv, vector<int> &list, vector<double> &vvel, vector<double> &vpos, vector<double> &vF,
+                vector<double> &vFold, vector<double> &vrad, vector<int> &im1, vector<int> &ip1, int &vim1, int &vip1,
+                double phi, vector<double> &a0, vector<double> &l0, int &NCTCS, vector<int> &cij,
+                vector<double> &calA0, vector<double> L, int largeNV, int smallNV);
 
 // zero momentum of system
 void zeroMomentum(int vertDOF, int ndim, int NVTOT, std::vector<double> &vvel);
 
-int getCenterCellIndex(int &NCELLS, vector<int> nv, vector<double> &vpos, vector<double> L, vector<int> &szList);
+int getCellIndexHere(double locx, double locy, int &NCELLS, vector<int> nv, vector<double> &vpos,
+                     vector<double> L, vector<int> &szList);
 
 // MAIN
 int main(int argc, char const *argv[])
@@ -1883,7 +1881,7 @@ int main(int argc, char const *argv[])
             zeroMomentum(vertDOF, NDIM, NVTOT, vvel);
         }
         //delete the last cell (last cell by index), request zero momentum after next integration step
-        if (tt > 0 && tt % int(500 / dt) == 0 && NCELLS > 4)
+        /*if (tt > 0 && tt % int(500 / dt) == 0 && NCELLS > 4)
         {
             if (NCELLS <= 10)
                 std::cout << "getting low on cells, warning!\n";
@@ -1893,6 +1891,17 @@ int main(int argc, char const *argv[])
             deleteMiddleCell(smallN, largeN, NCELLS, NVTOT, cellDOF, vertDOF, szList,
                              nv, list, vvel, vpos, vF, vFold, vrad, im1, ip1, vim1, vip1,
                              phi, a0, l0, NCTCS, cij, calA0, L, largeNV, smallNV);
+            isZeroMomentumNextStep = 1;
+        }*/
+
+        if (tt > int(500 / dt) && NCELLS > 10)
+        {
+            for (int i = 0; i < 10; i++)
+            {
+                deleteCell(smallN, largeN, NCELLS, NVTOT, cellDOF, vertDOF, szList,
+                           nv, list, vvel, vpos, vF, vFold, vrad, im1, ip1, vim1, vip1,
+                           phi, a0, l0, NCTCS, cij, calA0, L, largeNV, smallNV);
+            }
             isZeroMomentumNextStep = 1;
         }
 
@@ -2750,21 +2759,21 @@ void deleteLastCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &cell
     phi /= L[0] * L[1];
 }
 
-void deleteMiddleCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &cellDOF, int &vertDOF, vector<int> &szList,
-                      vector<int> &nv, vector<int> &list, vector<double> &vvel, vector<double> &vpos, vector<double> &vF,
-                      vector<double> &vFold, vector<double> &vrad, vector<int> &im1, vector<int> &ip1, int &vim1, int &vip1,
-                      double phi, vector<double> &a0, vector<double> &l0, int &NCTCS, vector<int> &cij,
-                      vector<double> &calA0, vector<double> L, int largeNV, int smallNV)
+void deleteCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &cellDOF, int &vertDOF, vector<int> &szList,
+                vector<int> &nv, vector<int> &list, vector<double> &vvel, vector<double> &vpos, vector<double> &vF,
+                vector<double> &vFold, vector<double> &vrad, vector<int> &im1, vector<int> &ip1, int &vim1, int &vip1,
+                double phi, vector<double> &a0, vector<double> &l0, int &NCTCS, vector<int> &cij,
+                vector<double> &calA0, vector<double> L, int largeNV, int smallNV)
 {
-    //delete particle nearest to the center, re-index all N-dependent vectors to account for this.
-    //easily modifiable to delete particles near any specified point. just edit getCenterCellIndex.
-    bool isDeleteLarge;
+    //deletes particle nearest to the center, re-index all N-dependent vectors to account for this.
 
     //cell index of center cell, to delete
-    int delete_index = getCenterCellIndex(NCELLS, nv, vpos, L, szList);
+    double xloc = 0.0;
+    double yloc = 0.0;
+    int delete_index = getCellIndexHere(xloc, yloc, NCELLS, nv, vpos, L, szList);
 
     // isDeleteLarge is true if we are deleting a large particle, false if deleting a small particle
-    isDeleteLarge = (nv[delete_index] == largeNV);
+    bool isDeleteLarge = (nv[delete_index] == largeNV);
     if (nv[delete_index] != largeNV && nv[delete_index] != smallNV)
         throw std::invalid_argument("nv does not correspond to large or small\n");
     if (isDeleteLarge)
@@ -2845,19 +2854,6 @@ void deleteMiddleCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &ce
 
     std::cout << "vvel size " << vvel.size() << '\n';
 
-    /*std::cout << "vpos[] entries to delete = \n";
-    for (auto i = vpos.begin() + NDIM * sumVertsUntilGlobalIndex; i < vpos.begin() + NDIM * (sumVertsUntilGlobalIndex + numVerts) + 1; i += 2)
-    {
-        std::cout << *i << '\t' << *(i + 1) << '\n';
-    }
-
-    std::cout << "entirety of vpos before deletion: \n";
-    for (auto i = vpos.begin(); i != vpos.end(); i++)
-    {
-        std::cout << *i << '\t';
-    }
-
-    std::cout << endl;*/
     //remove an entire cell of indices (NDIM*numVerts), for vectors of dimension (vertDOF)
     vvel.erase(vvel.begin() + NDIM * sumVertsUntilGlobalIndex, vvel.begin() + NDIM * (sumVertsUntilGlobalIndex + numVerts));
     vpos.erase(vpos.begin() + NDIM * sumVertsUntilGlobalIndex, vpos.begin() + NDIM * (sumVertsUntilGlobalIndex + numVerts));
@@ -2937,10 +2933,10 @@ void zeroMomentum(int vertDOF, int ndim, int NVTOT, std::vector<double> &vvel)
     }
 }
 
-int getCenterCellIndex(int &NCELLS, vector<int> nv, vector<double> &vpos, vector<double> L, vector<int> &szList)
+int getCellIndexHere(double xloc, double yloc, int &NCELLS, vector<int> nv, vector<double> &vpos, vector<double> L, vector<int> &szList)
 {
+    // returns the cell index of the cell nearest to the specified (xloc, yloc) coordinate.
     //loop through global indices, compute all centers of mass (stored in simulation as unbounded coordinates)
-    //after computing com, wrap (re-bound) com position
     //distance (squared) of centers of mass to origin
     vector<double> distanceSq = vector<double>(NCELLS, 1e7);
     double dx = 0.0;
@@ -2974,11 +2970,11 @@ int getCenterCellIndex(int &NCELLS, vector<int> nv, vector<double> &vpos, vector
 
         //cx,cy are relative to the bottom left corner of the box.
 
-        distanceSq[ci] = pow(cx - L.at(0) / 2, 2) + pow(cy - L.at(1) / 2, 2);
+        distanceSq[ci] = pow(cx - (L.at(0) / 2 + xloc), 2) + pow(cy - (L.at(1) / 2 + yloc), 2);
     }
     //compute argmin
     int argmin = std::distance(distanceSq.begin(), std::min_element(distanceSq.begin(), distanceSq.end()));
 
-    std::cout << "\nexiting getCenterCellIndex\n";
+    std::cout << "\nexiting getCellIndexHere\n";
     return argmin;
 }
