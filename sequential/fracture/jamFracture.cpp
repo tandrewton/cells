@@ -1894,7 +1894,7 @@ int main(int argc, char const *argv[])
             isZeroMomentumNextStep = 1;
         }*/
 
-        if (tt > int(500 / dt) && NCELLS > 10)
+        if (tt == int(500 / dt) && NCELLS > 90)
         {
             for (int i = 0; i < 10; i++)
             {
