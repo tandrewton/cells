@@ -108,7 +108,7 @@ int main(int argc, char const *argv[])
 
     // read in parameters from command line input
     // test: g++ -O3 -std=c++11 -g sequential/fracture/jamFracture.cpp -o frac.o
-    // test: ./frac.o 12 20 1.08 0.8 1e-7 1.0 0 0.5 0.01 1 2e5 pos.test shape.test energy.test
+    // test: ./frac.o 12 20 1.08 0.85 1e-7 1.0 0 0.5 0.01 1 1.4e5 pos.test shape.test energy.test
     // gdb -ex run --args ./frac.o 12 20 1.08 0.8 1e-7 1.0 0 0.5 0.01 1 2e5 pos.test shape.test energy.test
     //
     //
@@ -280,6 +280,7 @@ int main(int argc, char const *argv[])
     cout << "		Andrew Ton, 2021   							" << endl;
 
     cout << "		NCELLS 		= " << NCELLS << "					" << endl;
+
     cout << "		NV (small)	= " << smallNV << "						" << endl;
     cout << "		NV (large)	= " << largeNV << "						" << endl;
     cout << "		NVTOT 		= " << NVTOT << "					" << endl;
@@ -2755,8 +2756,6 @@ void deleteMiddleCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &ce
                       double phi, vector<double> &a0, vector<double> &l0, int &NCTCS, vector<int> &cij,
                       vector<double> &calA0, vector<double> L, int largeNV, int smallNV)
 {
-    std::cout << "NVTOT = " << NVTOT << " , #list, #ip1, #vrad = " << list.size() << '\t'
-              << ip1.size() << '\t' << vrad.size() << '\n';
     //delete particle nearest to the center, re-index all N-dependent vectors to account for this.
     //easily modifiable to delete particles near any specified point. just edit getCenterCellIndex.
     bool isDeleteLarge;
@@ -2779,8 +2778,10 @@ void deleteMiddleCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &ce
     //re-count contact matrix after decrementing NCELLS. Delete cell => delete row => delete NCELLS-1 entries
     //location of deletion doesn't matter because contact matrix is reset each integration step.
     std::cout << "NCELLS = " << NCELLS << '\n';
+
     NCTCS = 0.5 * NCELLS * (NCELLS - 1);
     cij.erase(cij.begin(), cij.begin() + (NCELLS - 1) - 1);
+
     std::cout << "NCTCS, #(cij) = " << NCTCS << '\t' << cij.size() << '\n';
 
     // number of vertices to delete
@@ -2844,13 +2845,36 @@ void deleteMiddleCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &ce
 
     std::cout << "vvel size " << vvel.size() << '\n';
 
+    /*std::cout << "vpos[] entries to delete = \n";
+    for (auto i = vpos.begin() + NDIM * sumVertsUntilGlobalIndex; i < vpos.begin() + NDIM * (sumVertsUntilGlobalIndex + numVerts) + 1; i += 2)
+    {
+        std::cout << *i << '\t' << *(i + 1) << '\n';
+    }
+
+    std::cout << "entirety of vpos before deletion: \n";
+    for (auto i = vpos.begin(); i != vpos.end(); i++)
+    {
+        std::cout << *i << '\t';
+    }
+
+    std::cout << endl;*/
     //remove an entire cell of indices (NDIM*numVerts), for vectors of dimension (vertDOF)
     vvel.erase(vvel.begin() + NDIM * sumVertsUntilGlobalIndex, vvel.begin() + NDIM * (sumVertsUntilGlobalIndex + numVerts));
     vpos.erase(vpos.begin() + NDIM * sumVertsUntilGlobalIndex, vpos.begin() + NDIM * (sumVertsUntilGlobalIndex + numVerts));
     vF.erase(vF.begin() + NDIM * sumVertsUntilGlobalIndex, vF.begin() + NDIM * (sumVertsUntilGlobalIndex + numVerts));
     vFold.erase(vFold.begin() + NDIM * sumVertsUntilGlobalIndex, vFold.begin() + NDIM * (sumVertsUntilGlobalIndex + numVerts));
 
-    std::cout << "vvel size " << vvel.size() << '\n';
+    /*std::cout << "entirety of vpos after deletion: \n";
+    for (auto i = vpos.begin(); i != vpos.end(); i++)
+    {
+        std::cout << *i << '\t';
+    }
+
+    std::cout << endl;
+    */
+
+    std::cout
+        << "vvel size " << vvel.size() << '\n';
     // save list of adjacent vertices
     im1 = vector<int>(NVTOT, 0);
     ip1 = vector<int>(NVTOT, 0);
@@ -2919,7 +2943,8 @@ int getCenterCellIndex(int &NCELLS, vector<int> nv, vector<double> &vpos, vector
     //after computing com, wrap (re-bound) com position
     //distance (squared) of centers of mass to origin
     vector<double> distanceSq = vector<double>(NCELLS, 1e7);
-
+    double dx = 0.0;
+    double dy = 0.0;
     for (int ci = 0; ci < NCELLS; ci++)
     {
         // first global index for ci
@@ -2930,11 +2955,13 @@ int getCenterCellIndex(int &NCELLS, vector<int> nv, vector<double> &vpos, vector
         double yi = vpos[NDIM * gi + 1];
         double cx = xi;
         double cy = yi;
-        for (int vi = 1; vi < nv.at(ci); vi++)
+        for (int vi = 1; vi < nv[ci]; vi++)
         {
-            double dx = vpos.at(NDIM * (gi + vi));
+            dx = vpos.at(NDIM * (gi + vi)) - xi;
+            dx -= L[0] * round(dx / L[0]);
 
-            double dy = vpos.at(NDIM * (gi + vi) + 1);
+            dy = vpos.at(NDIM * (gi + vi) + 1) - yi;
+            dy -= L[1] * round(dy / L[1]);
 
             xi += dx;
             yi += dy;
@@ -2942,14 +2969,16 @@ int getCenterCellIndex(int &NCELLS, vector<int> nv, vector<double> &vpos, vector
             cx += xi;
             cy += yi;
         }
-        cx /= nv.at(ci);
-        cy /= nv.at(ci);
-        //wrap com coordinates
-        cx = fmod(cx, L.at(0));
-        cy = fmod(cy, L.at(1));
-        distanceSq[ci] = pow(cx, 2) + pow(cy, 2);
+        cx /= nv[ci];
+        cy /= nv[ci];
+
+        //cx,cy are relative to the bottom left corner of the box.
+
+        distanceSq[ci] = pow(cx - L.at(0) / 2, 2) + pow(cy - L.at(1) / 2, 2);
     }
     //compute argmin
     int argmin = std::distance(distanceSq.begin(), std::min_element(distanceSq.begin(), distanceSq.end()));
+
+    std::cout << "\nexiting getCenterCellIndex\n";
     return argmin;
 }
