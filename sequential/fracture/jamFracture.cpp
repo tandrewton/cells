@@ -1887,7 +1887,7 @@ int main(int argc, char const *argv[])
         //delete the last cell (last cell by index), request zero momentum after next integration step
 
         //SCHEME FOR ELASTIC SHEET FRACTURE
-        if (tt > (int(199 / dt)) && tt % int(300 / dt) == 0 && NCELLS > 4)
+        if (tt >= (int(500 / dt)) && tt % int(1000 / dt) == 0 && NCELLS > 4)
         {
             if (NCELLS <= 10)
             {
