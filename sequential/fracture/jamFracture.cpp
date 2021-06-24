@@ -82,11 +82,11 @@ void printPos(ofstream &posout, vector<double> &vpos, vector<double> &vrad, vect
 
 // retire the (nearest-to-specified-point) cell's degree of freedom information from all vectors
 
-void deleteCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &cellDOF, int &vertDOF, vector<int> &szList,
-                vector<int> &nv, vector<int> &list, vector<double> &vvel, vector<double> &vpos, vector<double> &vF,
-                vector<double> &vFold, vector<double> &vrad, vector<int> &im1, vector<int> &ip1, int &vim1, int &vip1,
-                double phi, vector<double> &a0, vector<double> &l0, int &NCTCS, vector<int> &cij,
-                vector<double> &calA0, vector<double> L, int largeNV, int smallNV);
+void deleteCell(double xloc, double yloc, int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &cellDOF, int &vertDOF,
+                vector<int> &szList, vector<int> &nv, vector<int> &list, vector<double> &vvel, vector<double> &vpos,
+                vector<double> &vF, vector<double> &vFold, vector<double> &vrad, vector<int> &im1, vector<int> &ip1,
+                int &vim1, int &vip1, double phi, vector<double> &a0, vector<double> &l0, int &NCTCS,
+                vector<int> &cij, vector<double> &calA0, vector<double> L, int largeNV, int smallNV);
 
 // zero momentum of system
 void zeroMomentum(int vertDOF, int ndim, int NVTOT, std::vector<double> &vvel);
@@ -1894,13 +1894,25 @@ int main(int argc, char const *argv[])
             isZeroMomentumNextStep = 1;
         }*/
 
-        if (tt == int(500 / dt) && NCELLS > 90)
+        /*if (tt == int(500 / dt) && NCELLS > 90)
         {
             for (int i = 0; i < 10; i++)
             {
                 deleteCell(smallN, largeN, NCELLS, NVTOT, cellDOF, vertDOF, szList,
                            nv, list, vvel, vpos, vF, vFold, vrad, im1, ip1, vim1, vip1,
                            phi, a0, l0, NCTCS, cij, calA0, L, largeNV, smallNV);
+            }
+            isZeroMomentumNextStep = 1;
+        }*/
+
+        if (tt == int(200 / dt) && NCELLS >= 20)
+        {
+            for (int i = 0; i < 10; i++)
+            {
+                deleteCell(0.0, 0.0, smallN, largeN, NCELLS, NVTOT, cellDOF, vertDOF, szList,
+                           nv, list, vvel, vpos, vF, vFold, vrad, im1, ip1, vim1, vip1,
+                           phi, a0, l0, NCTCS, cij, calA0, L, largeNV, smallNV);
+                std::cout << "Deleting cell!\n";
             }
             isZeroMomentumNextStep = 1;
         }
@@ -2411,7 +2423,7 @@ int main(int argc, char const *argv[])
             }
 
             // print energies
-            cout << "\t** PRINTING ENERGIES TO FILE (does not account for friction)... " << endl;
+            //cout << "\t** PRINTING ENERGIES TO FILE (does not account for friction)... " << endl;
             enout << tt << "  " << K << "  " << U << "  " << K + U << "  " << endl;
         }
         // print debug to console, print vertex positions
@@ -2759,7 +2771,7 @@ void deleteLastCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &cell
     phi /= L[0] * L[1];
 }
 
-void deleteCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &cellDOF, int &vertDOF, vector<int> &szList,
+void deleteCell(double xloc, double yloc, int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &cellDOF, int &vertDOF, vector<int> &szList,
                 vector<int> &nv, vector<int> &list, vector<double> &vvel, vector<double> &vpos, vector<double> &vF,
                 vector<double> &vFold, vector<double> &vrad, vector<int> &im1, vector<int> &ip1, int &vim1, int &vip1,
                 double phi, vector<double> &a0, vector<double> &l0, int &NCTCS, vector<int> &cij,
@@ -2768,8 +2780,6 @@ void deleteCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &cellDOF,
     //deletes particle nearest to the center, re-index all N-dependent vectors to account for this.
 
     //cell index of center cell, to delete
-    double xloc = 0.0;
-    double yloc = 0.0;
     int delete_index = getCellIndexHere(xloc, yloc, NCELLS, nv, vpos, L, szList);
 
     // isDeleteLarge is true if we are deleting a large particle, false if deleting a small particle
@@ -2853,6 +2863,14 @@ void deleteCell(int &smallN, int &largeN, int &NCELLS, int &NVTOT, int &cellDOF,
     int sumVertsUntilGlobalIndex = szList[delete_index];
 
     std::cout << "vvel size " << vvel.size() << '\n';
+
+    std::cout << "vpos elements to delete (box units): \n";
+    for (auto i = vpos.begin() + NDIM * sumVertsUntilGlobalIndex; i < vpos.begin() + NDIM * (sumVertsUntilGlobalIndex + numVerts); i += 2)
+    {
+        std::cout << (*i) / L[0] << '\t' << (*(i + 1)) / L[1] << '\n';
+    }
+
+    std::cout << endl;
 
     //remove an entire cell of indices (NDIM*numVerts), for vectors of dimension (vertDOF)
     vvel.erase(vvel.begin() + NDIM * sumVertsUntilGlobalIndex, vvel.begin() + NDIM * (sumVertsUntilGlobalIndex + numVerts));
@@ -2974,6 +2992,13 @@ int getCellIndexHere(double xloc, double yloc, int &NCELLS, vector<int> nv, vect
     }
     //compute argmin
     int argmin = std::distance(distanceSq.begin(), std::min_element(distanceSq.begin(), distanceSq.end()));
+
+    std::cout << "distanceSq list = \n";
+    for (auto i = distanceSq.begin(); i != distanceSq.end(); i++)
+    {
+        std::cout << *i << '\t';
+    }
+    std::cout << "\n argmin = " << argmin << '\n';
 
     std::cout << "\nexiting getCellIndexHere\n";
     return argmin;
