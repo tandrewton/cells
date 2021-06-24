@@ -25,6 +25,7 @@
 #include <cmath>
 #include <fstream>
 #include <stdexcept>
+#include <random>
 #include <algorithm>
 #include <numeric>
 
@@ -1872,6 +1873,9 @@ int main(int argc, char const *argv[])
     //request zero momentum, since initialized with finite momentum
     bool isZeroMomentumNextStep = 1;
 
+    std::default_random_engine generator;
+    std::uniform_real_distribution<double> distribution(-0.5, 0.5);
+
     for (tt = 0; tt < NT; tt++)
     {
         // zero momentum
@@ -1881,30 +1885,25 @@ int main(int argc, char const *argv[])
             zeroMomentum(vertDOF, NDIM, NVTOT, vvel);
         }
         //delete the last cell (last cell by index), request zero momentum after next integration step
-        /*if (tt > 0 && tt % int(500 / dt) == 0 && NCELLS > 4)
+
+        //SCHEME FOR ELASTIC SHEET FRACTURE
+        if (tt > (int(199 / dt)) && tt % int(300 / dt) == 0 && NCELLS > 4)
         {
             if (NCELLS <= 10)
-                std::cout << "getting low on cells, warning!\n";
-            cout << "Deleting particle!\n";
-            //deleteLastCell(smallN, largeN, NCELLS, NVTOT, cellDOF, vertDOF, szList,
-            //               nv, list, vvel, vpos, vF, im1, ip1, vim1, vip1, phi, a0, l0, L, largeNV, smallNV);
-            deleteMiddleCell(smallN, largeN, NCELLS, NVTOT, cellDOF, vertDOF, szList,
-                             nv, list, vvel, vpos, vF, vFold, vrad, im1, ip1, vim1, vip1,
-                             phi, a0, l0, NCTCS, cij, calA0, L, largeNV, smallNV);
-            isZeroMomentumNextStep = 1;
-        }*/
-
-        /*if (tt == int(500 / dt) && NCELLS > 90)
-        {
-            for (int i = 0; i < 10; i++)
             {
-                deleteCell(smallN, largeN, NCELLS, NVTOT, cellDOF, vertDOF, szList,
-                           nv, list, vvel, vpos, vF, vFold, vrad, im1, ip1, vim1, vip1,
-                           phi, a0, l0, NCTCS, cij, calA0, L, largeNV, smallNV);
+                std::cout << "getting low on cells, warning!\n";
             }
+            cout << "Deleting particle!\n";
+            double xloc = distribution(generator) * L[0];
+            double yloc = distribution(generator) * L[1];
+            deleteCell(xloc, yloc, smallN, largeN, NCELLS, NVTOT, cellDOF, vertDOF, szList,
+                       nv, list, vvel, vpos, vF, vFold, vrad, im1, ip1, vim1, vip1,
+                       phi, a0, l0, NCTCS, cij, calA0, L, largeNV, smallNV);
             isZeroMomentumNextStep = 1;
-        }*/
+        }
 
+        /* 
+        // SCHEME FOR LASER ABLATION
         if (tt == int(200 / dt) && NCELLS >= 20)
         {
             for (int i = 0; i < 10; i++)
@@ -1915,7 +1914,7 @@ int main(int argc, char const *argv[])
                 std::cout << "Deleting cell!\n";
             }
             isZeroMomentumNextStep = 1;
-        }
+        }*/
 
         // VV POSITION UPDATE
         for (i = 0; i < vertDOF; i++)
