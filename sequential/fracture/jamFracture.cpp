@@ -1814,9 +1814,9 @@ int main(int argc, char const *argv[])
 
     /* * * * * * * * * * * * * * * * * * 
 
-			DAMPED MD
+			OVERDAMPED
 
-				DYNAMICS
+				ACTIVE DYNAMICS
 
 	 * * * * * * * * * * * * * * * * * */
 
@@ -1845,6 +1845,11 @@ int main(int argc, char const *argv[])
     int tt;
     double K, r1, r2, grv;
     att = att_md;
+    vector<double> psi(NCELLS, 0.0);
+    for (ci = 0; ci < NCELLS; ci++)
+        psi.at(ci) = 2.0 * PI * drand48();
+    //need to delete entries from psi when deleting a cell!
+    //need to add into arglist entries for activity
 
     // reset for MD
     dt = dt0;
@@ -1932,16 +1937,10 @@ int main(int argc, char const *argv[])
             vF[i] = 0;
         }
 
-        // reset linked list
-        for (gi = 0; gi < NVTOT + 1; gi++)
-            list[gi] = 0;
-
-        // reset linked list head
-        for (i = 0; i < NBX; i++)
-        {
-            head[i] = 0;
-            last[i] = 0;
-        }
+        // reset linked list variables
+        fill(list.begin(), list.end(), 0);
+        fill(head.begin(), head.end(), 0);
+        fill(last.begin(), last.end(), 0);
 
         // reset contact networks
         fill(cij.begin(), cij.end(), 0);
@@ -1992,6 +1991,9 @@ int main(int argc, char const *argv[])
                 // real particle index
                 gi = pi - 1;
 
+                // cell index of i
+                cindices(ci, vi, gi, NCELLS, szList);
+
                 // next particle in list
                 pj = list[pi];
 
@@ -2001,7 +2003,15 @@ int main(int argc, char const *argv[])
                     // real index of pj
                     gj = pj - 1;
 
-                    if (gj == ip1[gi] || gj == im1[gi])
+                    // cell index of j
+                    cindices(cj, vj, gj, NCELLS, szList);
+
+                    /*if (gj == ip1[gi] || gj == im1[gi]) (DELETE COMMENT BLOCK AFTER TESTING)
+                    {
+                        pj = list[pj];
+                        continue;
+                    }*/
+                    if (ci == cj)
                     {
                         pj = list[pj];
                         continue;
@@ -2046,14 +2056,23 @@ int main(int argc, char const *argv[])
                                 // add to potential energy
                                 U -= 0.5 * eint * pow((rij / sij) - 1.0 - att, 2.0);
 
-                                // add to contacts
+                                /*// add to contacts (DELETE THIS COMMENT BLOCK AFTER TESTING AND CONFIRMING CURRENT CODE WORKS)
                                 cindices(ci, vi, gi, NCELLS, szList);
                                 cindices(cj, vj, gj, NCELLS, szList);
 
                                 if (ci > cj)
                                     cij[NCELLS * cj + ci - (cj + 1) * (cj + 2) / 2]++;
                                 else if (ci < cj)
-                                    cij[NCELLS * ci + cj - (ci + 1) * (ci + 2) / 2]++;
+                                    cij[NCELLS * ci + cj - (ci + 1) * (ci + 2) / 2]++;*/
+
+                                // add to contacts (complication: should we consider cells to be in contact if they're in attraction range?)
+                                if (ci != cj)
+                                {
+                                    if (ci > cj)
+                                        cij[NCELLS * cj + ci - (cj + 1) * (cj + 2) / 2]++;
+                                    else
+                                        cij[NCELLS * ci + cj - (ci + 1) * (ci + 2) / 2]++;
+                                }
                             }
                             else if (rij < cutij && rij > sij && att > 0.0)
                             {
@@ -2076,13 +2095,13 @@ int main(int argc, char const *argv[])
                                 U += 0.5 * eint * (pow(1.0 - (rij / sij), 2.0) - 0.5 * att * att);
 
                                 // add to contacts
-                                cindices(ci, vi, gi, NCELLS, szList);
-                                cindices(cj, vj, gj, NCELLS, szList);
-
-                                if (ci > cj)
-                                    cij[NCELLS * cj + ci - (cj + 1) * (cj + 2) / 2]++;
-                                else if (ci < cj)
-                                    cij[NCELLS * ci + cj - (ci + 1) * (ci + 2) / 2]++;
+                                if (ci != cj)
+                                {
+                                    if (ci > cj)
+                                        cij[NCELLS * cj + ci - (cj + 1) * (cj + 2) / 2]++;
+                                    else
+                                        cij[NCELLS * ci + cj - (ci + 1) * (ci + 2) / 2]++;
+                                }
                             }
                             // otherwise, check for two overlapping purely-repulsive vertices
                             else if (rij < sij)
@@ -2106,13 +2125,13 @@ int main(int argc, char const *argv[])
                                 U += 0.5 * eint * (pow(1.0 - (rij / sij), 2.0) - 0.5 * att * att);
 
                                 // add to contacts
-                                cindices(ci, vi, gi, NCELLS, szList);
-                                cindices(cj, vj, gj, NCELLS, szList);
-
-                                if (ci > cj)
-                                    cij[NCELLS * cj + ci - (cj + 1) * (cj + 2) / 2]++;
-                                else if (ci < cj)
-                                    cij[NCELLS * ci + cj - (ci + 1) * (ci + 2) / 2]++;
+                                if (ci != cj)
+                                {
+                                    if (ci > cj)
+                                        cij[NCELLS * cj + ci - (cj + 1) * (cj + 2) / 2]++;
+                                    else
+                                        cij[NCELLS * ci + cj - (ci + 1) * (ci + 2) / 2]++;
+                                }
                             }
                         }
                     }
@@ -2133,11 +2152,21 @@ int main(int argc, char const *argv[])
                         // real index of pj
                         gj = pj - 1;
 
-                        if (gj == ip1[gi] || gj == im1[gi])
+                        // cell index of j
+                        cindices(cj, vj, gj, NCELLS, szList);
+
+                        /*if (gj == ip1[gi] || gj == im1[gi])
+                        {
+                            pj = list[pj];
+                            continue;
+                        }*/
+
+                        if (ci == cj)
                         {
                             pj = list[pj];
                             continue;
                         }
+
                         // contact distance
                         sij = vrad[gi] + vrad[gj];
 
@@ -2176,14 +2205,21 @@ int main(int argc, char const *argv[])
                                     // add to potential energy
                                     U -= 0.5 * eint * pow((rij / sij) - 1.0 - att, 2.0);
 
-                                    // add to contacts
+                                    /*// add to contacts
                                     cindices(ci, vi, gi, NCELLS, szList);
                                     cindices(cj, vj, gj, NCELLS, szList);
 
                                     if (ci > cj)
                                         cij[NCELLS * cj + ci - (cj + 1) * (cj + 2) / 2]++;
                                     else if (ci < cj)
-                                        cij[NCELLS * ci + cj - (ci + 1) * (ci + 2) / 2]++;
+                                        cij[NCELLS * ci + cj - (ci + 1) * (ci + 2) / 2]++;*/
+                                    if (ci != cj)
+                                    {
+                                        if (ci > cj)
+                                            cij[NCELLS * cj + ci - (cj + 1) * (cj + 2) / 2]++;
+                                        else
+                                            cij[NCELLS * ci + cj - (ci + 1) * (ci + 2) / 2]++;
+                                    }
                                 }
                                 else if (rij < cutij && rij > sij && att > 0.0)
                                 {
@@ -2205,14 +2241,13 @@ int main(int argc, char const *argv[])
                                     // add to potential energy
                                     U += 0.5 * eint * (pow(1.0 - (rij / sij), 2.0) - 0.5 * att * att);
 
-                                    // add to contacts
-                                    cindices(ci, vi, gi, NCELLS, szList);
-                                    cindices(cj, vj, gj, NCELLS, szList);
-
-                                    if (ci > cj)
-                                        cij[NCELLS * cj + ci - (cj + 1) * (cj + 2) / 2]++;
-                                    else if (ci < cj)
-                                        cij[NCELLS * ci + cj - (ci + 1) * (ci + 2) / 2]++;
+                                    if (ci != cj)
+                                    {
+                                        if (ci > cj)
+                                            cij[NCELLS * cj + ci - (cj + 1) * (cj + 2) / 2]++;
+                                        else
+                                            cij[NCELLS * ci + cj - (ci + 1) * (ci + 2) / 2]++;
+                                    }
                                 }
                                 // otherwise, check for two overlapping purely-repulsive vertices
                                 else if (rij < sij)
@@ -2235,14 +2270,13 @@ int main(int argc, char const *argv[])
                                     // add to potential energy
                                     U += 0.5 * eint * (pow(1.0 - (rij / sij), 2.0) - 0.5 * att * att);
 
-                                    // add to contacts
-                                    cindices(ci, vi, gi, NCELLS, szList);
-                                    cindices(cj, vj, gj, NCELLS, szList);
-
-                                    if (ci > cj)
-                                        cij[NCELLS * cj + ci - (cj + 1) * (cj + 2) / 2]++;
-                                    else if (ci < cj)
-                                        cij[NCELLS * ci + cj - (ci + 1) * (ci + 2) / 2]++;
+                                    if (ci != cj)
+                                    {
+                                        if (ci > cj)
+                                            cij[NCELLS * cj + ci - (cj + 1) * (cj + 2) / 2]++;
+                                        else
+                                            cij[NCELLS * ci + cj - (ci + 1) * (ci + 2) / 2]++;
+                                    }
                                 }
                             }
                         }
@@ -2257,7 +2291,7 @@ int main(int argc, char const *argv[])
             }
         }
 
-        // normalize pressure by box area (make dimensionless with extra factor of rho)
+        // normalize pressure by box area (make dimensionless with extra factor of rho) (consideration: renormalize using NCELLS instead?)
         pcheck *= (rho0 / (2.0 * L[0] * L[1]));
 
         // shape forces (loop over global vertex labels)
