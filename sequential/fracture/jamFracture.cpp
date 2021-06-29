@@ -1843,12 +1843,23 @@ int main(int argc, char const *argv[])
 
     // MD VARIABLES
     int tt;
-    double K, r1, r2, grv;
+    double K, r1, r2, grv, psitmp, ux, uy, dpsi, rnorm, v0tmp, psiMean, psiStd;
     att = att_md;
+
+    //PUT IN ARGLIST NEXT
+    double v0 = 0.05;
+    double vmin = 1e-2 * v0;
+
+    // initialize directors
+    double Ds = 0.2;  //active velocity spread parameter
+    double Dr0 = 0.1; //cell polarity rotational diffusion constant
+    //double Drtmp = Dr0;
+    vector<double> DrList(NCELLS, Dr0);
     vector<double> psi(NCELLS, 0.0);
     for (ci = 0; ci < NCELLS; ci++)
         psi.at(ci) = 2.0 * PI * drand48();
-    //need to delete entries from psi when deleting a cell!
+
+    //need to delete entries from psi abd DrList when deleting a cell!
     //need to add into arglist entries for activity
 
     // reset for MD
@@ -1891,7 +1902,7 @@ int main(int argc, char const *argv[])
         }
         //delete the last cell (last cell by index), request zero momentum after next integration step
 
-        //SCHEME FOR ELASTIC SHEET FRACTURE
+        /*//SCHEME FOR ELASTIC SHEET FRACTURE
         if (tt >= (int(500 / dt)) && tt % int(1000 / dt) == 0 && NCELLS > 4)
         {
             if (NCELLS <= 10)
@@ -1905,9 +1916,8 @@ int main(int argc, char const *argv[])
                        nv, list, vvel, vpos, vF, vFold, vrad, im1, ip1, vim1, vip1,
                        phi, a0, l0, NCTCS, cij, calA0, L, largeNV, smallNV);
             isZeroMomentumNextStep = 1;
-        }
+        }*/
 
-        /* 
         // SCHEME FOR LASER ABLATION
         if (tt == int(200 / dt) && NCELLS >= 20)
         {
@@ -1919,7 +1929,7 @@ int main(int argc, char const *argv[])
                 std::cout << "Deleting cell!\n";
             }
             isZeroMomentumNextStep = 1;
-        }*/
+        }
 
         // VV POSITION UPDATE
         for (i = 0; i < vertDOF; i++)
@@ -2006,11 +2016,6 @@ int main(int argc, char const *argv[])
                     // cell index of j
                     cindices(cj, vj, gj, NCELLS, szList);
 
-                    /*if (gj == ip1[gi] || gj == im1[gi]) (DELETE COMMENT BLOCK AFTER TESTING)
-                    {
-                        pj = list[pj];
-                        continue;
-                    }*/
                     if (ci == cj)
                     {
                         pj = list[pj];
@@ -2055,15 +2060,6 @@ int main(int argc, char const *argv[])
 
                                 // add to potential energy
                                 U -= 0.5 * eint * pow((rij / sij) - 1.0 - att, 2.0);
-
-                                /*// add to contacts (DELETE THIS COMMENT BLOCK AFTER TESTING AND CONFIRMING CURRENT CODE WORKS)
-                                cindices(ci, vi, gi, NCELLS, szList);
-                                cindices(cj, vj, gj, NCELLS, szList);
-
-                                if (ci > cj)
-                                    cij[NCELLS * cj + ci - (cj + 1) * (cj + 2) / 2]++;
-                                else if (ci < cj)
-                                    cij[NCELLS * ci + cj - (ci + 1) * (ci + 2) / 2]++;*/
 
                                 // add to contacts (complication: should we consider cells to be in contact if they're in attraction range?)
                                 if (ci != cj)
@@ -2155,12 +2151,6 @@ int main(int argc, char const *argv[])
                         // cell index of j
                         cindices(cj, vj, gj, NCELLS, szList);
 
-                        /*if (gj == ip1[gi] || gj == im1[gi])
-                        {
-                            pj = list[pj];
-                            continue;
-                        }*/
-
                         if (ci == cj)
                         {
                             pj = list[pj];
@@ -2205,14 +2195,6 @@ int main(int argc, char const *argv[])
                                     // add to potential energy
                                     U -= 0.5 * eint * pow((rij / sij) - 1.0 - att, 2.0);
 
-                                    /*// add to contacts
-                                    cindices(ci, vi, gi, NCELLS, szList);
-                                    cindices(cj, vj, gj, NCELLS, szList);
-
-                                    if (ci > cj)
-                                        cij[NCELLS * cj + ci - (cj + 1) * (cj + 2) / 2]++;
-                                    else if (ci < cj)
-                                        cij[NCELLS * ci + cj - (ci + 1) * (ci + 2) / 2]++;*/
                                     if (ci != cj)
                                     {
                                         if (ci > cj)
@@ -2296,6 +2278,9 @@ int main(int argc, char const *argv[])
 
         // shape forces (loop over global vertex labels)
         ci = 0;
+        psiMean = 0.0;
+        psiStd = 0.0;
+
         for (gi = 0; gi < NVTOT; gi++)
         {
 
@@ -2360,6 +2345,17 @@ int main(int argc, char const *argv[])
                     rim2y = vpos[NDIM * im1[im1[gi]] + 1] - cy;
                     rim2y -= L[1] * round(rim2y / L[1]);
 
+                    r1 = drand48();
+                    r2 = drand48();
+                    grv = sqrt(-2.0 * log(r1)) * cos(2.0 * PI * r2);
+
+                    // update director
+                    psi[ci] += sqrt(dt * 2.0 * DrList[ci]) * grv;
+
+                    // add to mean and std dev of directors
+                    psiMean += psi[ci];
+                    psiStd += psi[ci] * psi[ci];
+
                     // increment cell index
                     ci++;
                 }
@@ -2423,6 +2419,25 @@ int main(int argc, char const *argv[])
                 vF[NDIM * gi] += fb * (3.0 * (lix - lim1x) + lim2x - lip1x);
                 vF[NDIM * gi + 1] += fb * (3.0 * (liy - lim1y) + lim2y - lip1y);
             }
+
+            //active force
+
+            //get angular distance from psi
+            psitmp = atan2(riy, rix);
+            dpsi = psitmp - psi[ci - 1];
+            dpsi -= 2 * PI * round(dpsi / (2.0 * PI));
+
+            // get velocity scale
+            v0tmp = vmin + (v0 - vmin) * exp(-pow(dpsi, 2.0) / (2.0 * Ds * Ds));
+
+            // get unit vectors
+            rnorm = sqrt(rix * rix + riy * riy);
+            ux = rix / rnorm;
+            uy = riy / rnorm;
+
+            // add to forces
+            vF[NDIM * gi] += v0tmp * ux;
+            vF[NDIM * gi + 1] += v0tmp * uy;
 
             // update old coordinates
             rim2x = rim1x;
